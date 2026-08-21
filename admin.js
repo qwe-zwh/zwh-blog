@@ -68,7 +68,7 @@ document.querySelector("#postForm").addEventListener("submit", async event => {
     content: document.querySelector("#contentInput").value,
     tags: document.querySelector("#tagsInput").value.split(",").map(tag => tag.trim()).filter(Boolean),
     locked: protectPostInput.checked,
-    readPassword: protectPostInput.checked ? readPasswordInput.value : "",
+    readPassword: readPasswordInput.value,
   };
   if (payload.locked && !payload.readPassword.trim()) {
     formMessage.className = "form-message";

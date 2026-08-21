@@ -68,7 +68,9 @@ export async function onRequestPost({ request, env }) {
   const content = safeText(input.content, 20000);
   const tags = normalizeTags(input.tags);
   const readPassword = safeText(input.readPassword, 128);
-  const locked = input.locked === true;
+  // A supplied reading password always protects the post, even if a stale browser
+  // fails to submit the checkbox state.
+  const locked = input.locked === true || Boolean(readPassword);
 
   if (!title || !excerpt || !content) {
     return json({ error: "Title, summary, and content are required." }, 400, { "access-control-allow-origin": origin });
