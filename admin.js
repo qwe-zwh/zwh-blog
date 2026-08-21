@@ -5,6 +5,7 @@ const tokenInput = document.querySelector("#tokenInput");
 const loginError = document.querySelector("#loginError");
 const formMessage = document.querySelector("#formMessage");
 const publishButton = document.querySelector("#publishButton");
+const loginButton = document.querySelector("#loginButton");
 const managePanel = document.querySelector("#managePanel");
 const managedPosts = document.querySelector("#managedPosts");
 const manageMessage = document.querySelector("#manageMessage");
@@ -12,13 +13,34 @@ const manageMessage = document.querySelector("#manageMessage");
 function token() { return sessionStorage.getItem(tokenKey); }
 function showEditor() { loginPanel.hidden = true; editorPanel.hidden = false; managePanel.hidden = false; loadManagedPosts(); }
 
-if (token()) showEditor();
+async function validateToken(value) {
+  const response = await fetch("/api/auth", { method: "POST", headers: { authorization: `Bearer ${value}` } });
+  return response.ok;
+}
 
-document.querySelector("#loginButton").addEventListener("click", () => {
+if (token()) {
+  validateToken(token()).then(valid => {
+    if (valid) showEditor();
+    else sessionStorage.removeItem(tokenKey);
+  }).catch(() => sessionStorage.removeItem(tokenKey));
+}
+
+loginButton.addEventListener("click", async () => {
   const value = tokenInput.value.trim();
   if (!value) { loginError.textContent = "请输入发布密钥。"; return; }
+  loginButton.disabled = true;
+  loginError.textContent = "正在验证...";
+  try {
+    if (!await validateToken(value)) throw new Error("密钥错误，请重新输入。");
+  } catch (error) {
+    sessionStorage.removeItem(tokenKey);
+    loginError.textContent = error.message;
+    loginButton.disabled = false;
+    return;
+  }
   sessionStorage.setItem(tokenKey, value);
   loginError.textContent = "";
+  loginButton.disabled = false;
   showEditor();
 });
 
