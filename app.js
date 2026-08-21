@@ -26,6 +26,10 @@ fetch('/api/posts')
   .then(onlinePosts => {
     const normalized = onlinePosts.map(post => ({ ...post, date: new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(post.createdAt)).replaceAll('/', '.'), featured: false }));
     posts = [...normalized, ...samplePosts];
+    if (onlinePosts.length) {
+      const latest = onlinePosts.reduce((newest, post) => new Date(post.createdAt) > new Date(newest.createdAt) ? post : newest);
+      document.querySelector('#lastUpdated').textContent = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(latest.createdAt)).replaceAll('/', ' / ');
+    }
     renderPosts(input.value);
   })
   .catch(() => {});
