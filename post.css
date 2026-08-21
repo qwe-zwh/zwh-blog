@@ -1,0 +1,1 @@
+.article-shell { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 100px; }.article { margin-top: 74px; }.article h1 { margin: 14px 0 20px; font-size: clamp(38px, 7vw, 62px); }.article-content { margin-top: 42px; color: var(--ink); font-size: 17px; line-height: 2; }.article-content p { margin: 0 0 1.55em; }
