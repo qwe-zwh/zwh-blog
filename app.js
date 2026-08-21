@@ -1,11 +1,4 @@
-const samplePosts = [
-  { date: '2026.08.20', title: '把复杂的事，写得清楚一点', excerpt: '关于记录、拆解问题，以及为什么清晰有时比聪明更重要。', tags: ['随笔', '思考'], featured: true },
-  { date: '2026.08.16', title: '从一次小重构开始理解边界', excerpt: '代码变得难以维护，通常不是因为它不够漂亮，而是因为边界没有被说清楚。', tags: ['技术', 'JavaScript'], featured: true },
-  { date: '2026.08.09', title: '给自己的终端留一盏灯', excerpt: '整理一些正在使用的命令行工具，也整理一种更安静的工作节奏。', tags: ['工具', '效率'] },
-  { date: '2026.07.28', title: '在信息太多的时候读一本书', excerpt: '阅读不是从世界逃开，而是重新获得注意力的方向。', tags: ['阅读', '生活'] },
-  { date: '2026.07.12', title: '一个页面从空白到上线', excerpt: '记录个人项目的最小闭环：做出来、发布出去、再慢慢变好。', tags: ['建站', '实践'] },
-  { date: '2026.06.30', title: '少一点预设，多一点观察', excerpt: '写给仍然在练习提问的人：先描述发生了什么，再急着解释它。', tags: ['随笔'] }
-];
+const samplePosts = [];
 
 let posts = samplePosts;
 const list = document.querySelector('#postList');
