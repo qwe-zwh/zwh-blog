@@ -43,10 +43,15 @@ async function getPosts(env) {
   return posts.filter(Boolean).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+function publicPost(post) {
+  const { content, passwordHash, passwordSalt, ...metadata } = post;
+  return { ...metadata, locked: Boolean(passwordHash) };
+}
+
 export async function onRequestGet({ env, request }) {
   const origin = cors(request);
   const posts = await getPosts(env);
-  return json(posts, 200, { "access-control-allow-origin": origin });
+  return json(posts.map(publicPost), 200, { "access-control-allow-origin": origin });
 }
 
 export async function onRequestPost({ request, env }) {
@@ -62,6 +67,7 @@ export async function onRequestPost({ request, env }) {
   const excerpt = safeText(input.excerpt, 260);
   const content = safeText(input.content, 20000);
   const tags = normalizeTags(input.tags);
+  const readPassword = safeText(input.readPassword, 128);
 
   if (!title || !excerpt || !content) {
     return json({ error: "Title, summary, and content are required." }, 400, { "access-control-allow-origin": origin });
@@ -73,11 +79,21 @@ export async function onRequestPost({ request, env }) {
 
   const id = makeId();
   const createdAt = new Date().toISOString();
-  const post = { id, title, excerpt, content, tags, createdAt };
+  const passwordSalt = readPassword ? crypto.randomUUID() : "";
+  const post = {
+    id,
+    title,
+    excerpt,
+    content,
+    tags,
+    createdAt,
+    passwordSalt,
+    passwordHash: readPassword ? await passwordHash(`${passwordSalt}:${readPassword}`) : "",
+  };
   const ids = (await env.POSTS.get("index", "json")) || [];
   await env.POSTS.put(`post:${id}`, JSON.stringify(post));
   await env.POSTS.put("index", JSON.stringify([id, ...ids]));
-  return json(post, 201, { "access-control-allow-origin": origin });
+  return json(publicPost(post), 201, { "access-control-allow-origin": origin });
 }
 
 export async function onRequestOptions({ request }) {

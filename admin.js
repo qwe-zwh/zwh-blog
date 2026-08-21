@@ -9,6 +9,9 @@ const loginButton = document.querySelector("#loginButton");
 const managePanel = document.querySelector("#managePanel");
 const managedPosts = document.querySelector("#managedPosts");
 const manageMessage = document.querySelector("#manageMessage");
+const protectPostInput = document.querySelector("#protectPostInput");
+const readPasswordField = document.querySelector("#readPasswordField");
+const readPasswordInput = document.querySelector("#readPasswordInput");
 
 function token() { return sessionStorage.getItem(tokenKey); }
 function showEditor() { loginPanel.hidden = true; editorPanel.hidden = false; managePanel.hidden = false; loadManagedPosts(); }
@@ -51,6 +54,12 @@ document.querySelector("#logoutButton").addEventListener("click", () => {
   tokenInput.value = "";
 });
 
+protectPostInput.addEventListener("change", () => {
+  readPasswordField.hidden = !protectPostInput.checked;
+  readPasswordInput.required = protectPostInput.checked;
+  if (!protectPostInput.checked) readPasswordInput.value = "";
+});
+
 document.querySelector("#postForm").addEventListener("submit", async event => {
   event.preventDefault();
   const payload = {
@@ -58,6 +67,7 @@ document.querySelector("#postForm").addEventListener("submit", async event => {
     excerpt: document.querySelector("#excerptInput").value,
     content: document.querySelector("#contentInput").value,
     tags: document.querySelector("#tagsInput").value.split(",").map(tag => tag.trim()).filter(Boolean),
+    readPassword: protectPostInput.checked ? readPasswordInput.value : "",
   };
   publishButton.disabled = true;
   formMessage.className = "form-message";
@@ -67,6 +77,7 @@ document.querySelector("#postForm").addEventListener("submit", async event => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "发布失败。请稍后重试。");
     event.target.reset();
+    readPasswordField.hidden = true;
     formMessage.className = "form-message success";
     formMessage.textContent = "发布成功，首页刷新后即可看到新文章。";
     loadManagedPosts();

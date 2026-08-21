@@ -26,6 +26,8 @@
         <label>摘要<textarea id="excerptInput" required maxlength="260" rows="3" placeholder="首页会显示这段简短介绍"></textarea></label>
         <label>标签<span class="field-tip">用逗号分隔，例如：技术, 随笔</span><input id="tagsInput" maxlength="180" placeholder="技术, 随笔"></label>
         <label>正文<span class="field-tip">支持纯文本；空行会显示为分段。</span><textarea id="contentInput" required maxlength="20000" rows="16" placeholder="开始写作..."></textarea></label>
+        <label class="password-option"><input id="protectPostInput" type="checkbox"> 阅读文章需要密码</label>
+        <label id="readPasswordField" hidden>阅读密码<span class="field-tip">该密码不能找回，请妥善保存。</span><input id="readPasswordInput" type="password" maxlength="128" autocomplete="new-password" placeholder="设置读者查看正文时需要输入的密码"></label>
         <div class="editor-actions"><button id="publishButton" class="primary-button" type="submit">发布文章</button><a href="/index.html" class="text-button">返回博客</a></div>
         <p id="formMessage" class="form-message" role="status"></p>
       </form>

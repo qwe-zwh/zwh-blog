@@ -10,7 +10,7 @@
 <body>
   <main class="article-shell">
     <a class="brand" href="/index.html"><span class="brand-mark">z</span><span>zwh 的博客</span></a>
-    <article id="article" class="article" hidden><p id="postDate" class="post-date"></p><h1 id="postTitle"></h1><div id="postTags" class="post-tags"></div><div id="postContent" class="article-content"></div></article>
+    <article id="article" class="article" hidden><p id="postDate" class="post-date"></p><h1 id="postTitle"></h1><div id="postTags" class="post-tags"></div><section id="lockedPost" class="locked-post" hidden><p class="eyebrow"><span class="status-dot"></span> PASSWORD PROTECTED</p><h2>这篇文章需要阅读密码</h2><p>请输入作者设置的密码后继续阅读。</p><form id="unlockForm"><input id="unlockPassword" type="password" required placeholder="输入阅读密码" autocomplete="current-password"><button type="submit" class="unlock-button">查看文章</button></form><p id="unlockMessage" class="unlock-message" role="alert"></p></section><div id="postContent" class="article-content"></div></article>
     <p id="articleError" class="empty-state" hidden>这篇文章不存在，或已被删除。</p>
   </main>
   <script src="post.js"></script>
