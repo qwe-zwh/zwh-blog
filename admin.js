@@ -86,7 +86,7 @@ document.querySelector("#postForm").addEventListener("submit", async event => {
     event.target.reset();
     readPasswordField.hidden = true;
     formMessage.className = "form-message success";
-    formMessage.textContent = "发布成功，首页刷新后即可看到新文章。";
+    formMessage.textContent = data.locked ? "发布成功：已启用阅读密码。" : "发布成功：文章公开可读。";
     loadManagedPosts();
   } catch (error) {
     formMessage.textContent = error.message;
