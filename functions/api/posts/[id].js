@@ -8,12 +8,12 @@ function authorized(request, env) {
 
 function publicPost(post) {
   const { content, passwordHash, passwordSalt, ...metadata } = post;
-  return { ...metadata, locked: Boolean(passwordHash) };
+  return { ...metadata, locked: Boolean(post.locked || passwordHash) };
 }
 
 export async function onRequestGet({ env, params }) {
   const post = await env.POSTS.get(`post:${params.id}`, "json");
-  return post ? json(post.passwordHash ? publicPost(post) : post) : json({ error: "Not found." }, 404);
+  return post ? json((post.locked || post.passwordHash) ? publicPost(post) : post) : json({ error: "Not found." }, 404);
 }
 
 export async function onRequestDelete({ request, env, params }) {

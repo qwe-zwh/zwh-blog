@@ -45,7 +45,7 @@ async function getPosts(env) {
 
 function publicPost(post) {
   const { content, passwordHash, passwordSalt, ...metadata } = post;
-  return { ...metadata, locked: Boolean(passwordHash) };
+  return { ...metadata, locked: Boolean(post.locked || passwordHash) };
 }
 
 export async function onRequestGet({ env, request }) {
@@ -68,9 +68,14 @@ export async function onRequestPost({ request, env }) {
   const content = safeText(input.content, 20000);
   const tags = normalizeTags(input.tags);
   const readPassword = safeText(input.readPassword, 128);
+  const locked = input.locked === true;
 
   if (!title || !excerpt || !content) {
     return json({ error: "Title, summary, and content are required." }, 400, { "access-control-allow-origin": origin });
+  }
+
+  if (locked && !readPassword) {
+    return json({ error: "阅读密码不能为空。" }, 400, { "access-control-allow-origin": origin });
   }
 
   if (!isAuthorized(request, env)) {
@@ -79,7 +84,7 @@ export async function onRequestPost({ request, env }) {
 
   const id = makeId();
   const createdAt = new Date().toISOString();
-  const passwordSalt = readPassword ? crypto.randomUUID() : "";
+  const passwordSalt = locked ? crypto.randomUUID() : "";
   const post = {
     id,
     title,
@@ -87,8 +92,9 @@ export async function onRequestPost({ request, env }) {
     content,
     tags,
     createdAt,
+    locked,
     passwordSalt,
-    passwordHash: readPassword ? await passwordHash(`${passwordSalt}:${readPassword}`) : "",
+    passwordHash: locked ? await passwordHash(`${passwordSalt}:${readPassword}`) : "",
   };
   const ids = (await env.POSTS.get("index", "json")) || [];
   await env.POSTS.put(`post:${id}`, JSON.stringify(post));

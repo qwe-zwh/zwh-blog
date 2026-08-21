@@ -12,7 +12,7 @@ async function passwordHash(password) {
 export async function onRequestPost({ request, env, params }) {
   const post = await env.POSTS.get(`post:${params.id}`, "json");
   if (!post) return json({ error: "Not found." }, 404);
-  if (!post.passwordHash) return json(post);
+  if (!post.locked && !post.passwordHash) return json(post);
 
   let input;
   try {

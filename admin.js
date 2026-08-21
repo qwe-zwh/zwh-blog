@@ -67,8 +67,15 @@ document.querySelector("#postForm").addEventListener("submit", async event => {
     excerpt: document.querySelector("#excerptInput").value,
     content: document.querySelector("#contentInput").value,
     tags: document.querySelector("#tagsInput").value.split(",").map(tag => tag.trim()).filter(Boolean),
+    locked: protectPostInput.checked,
     readPassword: protectPostInput.checked ? readPasswordInput.value : "",
   };
+  if (payload.locked && !payload.readPassword.trim()) {
+    formMessage.className = "form-message";
+    formMessage.textContent = "已选择阅读密码，请先设置密码。";
+    readPasswordInput.focus();
+    return;
+  }
   publishButton.disabled = true;
   formMessage.className = "form-message";
   formMessage.textContent = "正在发布...";
