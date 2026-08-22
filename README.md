@@ -6,6 +6,10 @@
 - 文章列表与标签
 - 浏览器端即时搜索
 - 深色模式
+- 新文章可设置阅读密码，未解锁时服务端不会返回正文
+- 后台可为已发布文章设置、更换或取消阅读密码
+- 文章点赞与取消点赞，同一浏览器重复点赞会自动去重
+- 文章评论、发布频率限制与后台评论管理
 - 归档与关于页面区块
 
 ## 本地预览
@@ -32,6 +36,32 @@ python -m http.server 4173
    - Value: 使用密码管理器生成一串至少 32 位的随机字符
 5. 将整个 `zwh-blog` 目录推送到 GitHub，并在 Cloudflare Pages 中连接仓库。
 
+### 配置评论与点赞数据库
+
+评论和点赞使用 Cloudflare D1。先创建数据库：
+
+```powershell
+npx wrangler d1 create zwh-blog-interactions
+```
+
+将命令返回的 Database ID 填入 `wrangler.toml` 的 `REPLACE_WITH_YOUR_D1_DATABASE_ID`，然后初始化数据表：
+
+```powershell
+npx wrangler d1 execute zwh-blog-interactions --remote --file=./migrations/0001_interactions.sql
+```
+
+在 Pages 项目 Settings -> Bindings 中添加 D1 database binding：
+
+- Variable name: `DB`
+- D1 database: `zwh-blog-interactions`
+
+再添加一个至少 32 位的随机 Secret，用于匿名访客与评论来源的不可逆哈希：
+
+- Variable name: `INTERACTION_SALT`
+- Value: 密码管理器生成的随机字符串
+
+修改绑定或环境变量后需要重新部署项目。
+
 部署设置：
 
 - Framework preset: `None`
@@ -39,3 +69,10 @@ python -m http.server 4173
 - Build output directory: `/`
 
 部署完成后，在 Pages 的 Custom domains 中添加 `zwh123.ccwu.cc`。发布入口为 `/admin.html`，文章详情使用 `post.html?id=文章ID`。
+
+## 文章阅读密码
+
+- 发布新文章时勾选“阅读文章需要密码”，输入阅读密码后发布。
+- 已发布文章可在后台“管理文章”区域设置、更换或取消密码。
+- 阅读密码无法找回；更换密码不影响文章正文。
+- 密码仅以加盐哈希形式保存在 KV 中，加密文章的公开列表和详情接口不会返回正文。

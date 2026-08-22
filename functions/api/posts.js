@@ -3,7 +3,7 @@ const encoder = new TextEncoder();
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", ...headers },
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers },
   });
 }
 
@@ -14,6 +14,10 @@ function cors(request) {
 
 function safeText(value, max) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function safePassword(value) {
+  return typeof value === "string" ? value.slice(0, 128) : "";
 }
 
 function normalizeTags(value) {
@@ -56,6 +60,10 @@ export async function onRequestGet({ env, request }) {
 
 export async function onRequestPost({ request, env }) {
   const origin = cors(request);
+  if (!isAuthorized(request, env)) {
+    return json({ error: "Unauthorized." }, 401, { "access-control-allow-origin": origin });
+  }
+
   let input;
   try {
     input = await request.json();
@@ -67,7 +75,7 @@ export async function onRequestPost({ request, env }) {
   const excerpt = safeText(input.excerpt, 260);
   const content = safeText(input.content, 20000);
   const tags = normalizeTags(input.tags);
-  const readPassword = safeText(input.readPassword, 128);
+  const readPassword = safePassword(input.readPassword);
   // A supplied reading password always protects the post, even if a stale browser
   // fails to submit the checkbox state.
   const locked = input.locked === true || Boolean(readPassword);
@@ -76,12 +84,8 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Title, summary, and content are required." }, 400, { "access-control-allow-origin": origin });
   }
 
-  if (locked && !readPassword) {
+  if (locked && !readPassword.trim()) {
     return json({ error: "阅读密码不能为空。" }, 400, { "access-control-allow-origin": origin });
-  }
-
-  if (!isAuthorized(request, env)) {
-    return json({ error: "Unauthorized." }, 401, { "access-control-allow-origin": origin });
   }
 
   const id = makeId();

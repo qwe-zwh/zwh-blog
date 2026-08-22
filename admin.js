@@ -12,9 +12,21 @@ const manageMessage = document.querySelector("#manageMessage");
 const protectPostInput = document.querySelector("#protectPostInput");
 const readPasswordField = document.querySelector("#readPasswordField");
 const readPasswordInput = document.querySelector("#readPasswordInput");
+const passwordDialog = document.querySelector("#passwordDialog");
+const passwordForm = document.querySelector("#passwordForm");
+const passwordDialogTitle = document.querySelector("#passwordDialogTitle");
+const passwordDialogPost = document.querySelector("#passwordDialogPost");
+const passwordDialogMessage = document.querySelector("#passwordDialogMessage");
+const managedPasswordInput = document.querySelector("#managedPasswordInput");
+const managedPasswordConfirm = document.querySelector("#managedPasswordConfirm");
+const savePasswordButton = document.querySelector("#savePasswordButton");
+const commentManagePanel = document.querySelector("#commentManagePanel");
+const managedComments = document.querySelector("#managedComments");
+const commentManageMessage = document.querySelector("#commentManageMessage");
+let passwordTarget = null;
 
 function token() { return sessionStorage.getItem(tokenKey); }
-function showEditor() { loginPanel.hidden = true; editorPanel.hidden = false; managePanel.hidden = false; loadManagedPosts(); }
+function showEditor() { loginPanel.hidden = true; editorPanel.hidden = false; managePanel.hidden = false; commentManagePanel.hidden = false; loadManagedPosts(); }
 
 async function validateToken(value) {
   const response = await fetch("/api/auth", { method: "POST", headers: { authorization: `Bearer ${value}` } });
@@ -50,6 +62,8 @@ loginButton.addEventListener("click", async () => {
 document.querySelector("#logoutButton").addEventListener("click", () => {
   sessionStorage.removeItem(tokenKey);
   editorPanel.hidden = true;
+  managePanel.hidden = true;
+  commentManagePanel.hidden = true;
   loginPanel.hidden = false;
   tokenInput.value = "";
 });
@@ -100,6 +114,7 @@ function formatDate(iso) {
 }
 
 async function loadManagedPosts() {
+  manageMessage.className = "form-message";
   manageMessage.textContent = "正在加载...";
   try {
     const response = await fetch("/api/posts");
@@ -122,21 +137,179 @@ async function loadManagedPosts() {
       title.textContent = post.title;
       const meta = document.createElement("p");
       meta.className = "managed-post-meta";
-      meta.textContent = `${formatDate(post.createdAt)} · ${(post.tags || []).join(" / ") || "无标签"}`;
+      meta.append(`${formatDate(post.createdAt)} · ${(post.tags || []).join(" / ") || "无标签"} · `);
+      const lockState = document.createElement("span");
+      lockState.className = "lock-state";
+      lockState.textContent = post.locked ? "已加密" : "公开";
+      meta.append(lockState);
       info.append(title, meta);
-      const button = document.createElement("button");
-      button.className = "delete-button";
-      button.type = "button";
-      button.textContent = "删除";
-      button.addEventListener("click", () => deletePost(post.id, post.title));
-      row.append(info, button);
+      const actions = document.createElement("div");
+      actions.className = "managed-post-actions";
+      const passwordButton = document.createElement("button");
+      passwordButton.className = "access-button";
+      passwordButton.type = "button";
+      passwordButton.textContent = post.locked ? "更换密码" : "设置密码";
+      passwordButton.addEventListener("click", () => openPasswordDialog(post));
+      actions.append(passwordButton);
+      if (post.locked) {
+        const unlockButton = document.createElement("button");
+        unlockButton.className = "access-button";
+        unlockButton.type = "button";
+        unlockButton.textContent = "取消密码";
+        unlockButton.addEventListener("click", () => removePassword(post));
+        actions.append(unlockButton);
+      }
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "delete-button";
+      deleteButton.type = "button";
+      deleteButton.textContent = "删除";
+      deleteButton.addEventListener("click", () => deletePost(post.id, post.title));
+      actions.append(deleteButton);
+      row.append(info, actions);
       managedPosts.append(row);
     });
     manageMessage.textContent = "";
+    loadManagedComments(new Map(posts.map(post => [post.id, post.title])));
   } catch (error) {
     manageMessage.textContent = error.message;
   }
 }
+
+async function loadManagedComments(postTitles = new Map()) {
+  commentManageMessage.className = "form-message";
+  commentManageMessage.textContent = "正在加载...";
+  try {
+    const response = await fetch("/api/comments", { headers: { authorization: `Bearer ${token()}` }, cache: "no-store" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "评论列表加载失败。");
+    managedComments.replaceChildren();
+    const comments = data.comments || [];
+    if (!comments.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-manage";
+      empty.textContent = "还没有评论。";
+      managedComments.append(empty);
+    }
+    comments.forEach(comment => {
+      const item = document.createElement("article");
+      item.className = "managed-comment";
+      const head = document.createElement("div");
+      head.className = "managed-comment-head";
+      const info = document.createElement("div");
+      const author = document.createElement("p");
+      author.className = "managed-comment-author";
+      author.textContent = comment.author;
+      const meta = document.createElement("p");
+      meta.className = "managed-comment-meta";
+      meta.textContent = `${postTitles.get(comment.postId) || "文章已删除"} · ${formatDate(comment.createdAt)}`;
+      info.append(author, meta);
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "delete-button";
+      deleteButton.type = "button";
+      deleteButton.textContent = "删除评论";
+      deleteButton.addEventListener("click", () => deleteComment(comment.id, comment.author, postTitles));
+      head.append(info, deleteButton);
+      const body = document.createElement("p");
+      body.className = "managed-comment-body";
+      body.textContent = comment.content;
+      item.append(head, body);
+      managedComments.append(item);
+    });
+    commentManageMessage.textContent = "";
+  } catch (error) {
+    commentManageMessage.textContent = error.message;
+  }
+}
+
+async function deleteComment(id, author, postTitles) {
+  if (!window.confirm(`确定删除 ${author} 的这条评论吗？`)) return;
+  commentManageMessage.className = "form-message";
+  commentManageMessage.textContent = "正在删除...";
+  try {
+    const response = await fetch(`/api/comments/${encodeURIComponent(id)}`, { method: "DELETE", headers: { authorization: `Bearer ${token()}` } });
+    const data = response.status === 204 ? null : await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.error || "评论删除失败。");
+    await loadManagedComments(postTitles);
+    commentManageMessage.className = "form-message success";
+    commentManageMessage.textContent = "评论已删除。";
+  } catch (error) {
+    commentManageMessage.textContent = error.message;
+  }
+}
+
+function openPasswordDialog(post) {
+  passwordTarget = post;
+  passwordForm.reset();
+  passwordDialogTitle.textContent = post.locked ? "更换阅读密码" : "设置阅读密码";
+  passwordDialogPost.textContent = `《${post.title}》`;
+  passwordDialogMessage.textContent = "";
+  passwordDialog.showModal();
+  managedPasswordInput.focus();
+}
+
+function closePasswordDialog() {
+  passwordTarget = null;
+  passwordForm.reset();
+  passwordDialog.close();
+}
+
+async function updatePostProtection(id, payload) {
+  const response = await fetch(`/api/posts/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token()}` },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "阅读密码更新失败。");
+  return data;
+}
+
+passwordForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!passwordTarget) return;
+  const password = managedPasswordInput.value;
+  if (!password.trim()) {
+    passwordDialogMessage.textContent = "密码不能为空。";
+    managedPasswordInput.focus();
+    return;
+  }
+  if (password !== managedPasswordConfirm.value) {
+    passwordDialogMessage.textContent = "两次输入的密码不一致。";
+    managedPasswordConfirm.focus();
+    return;
+  }
+  savePasswordButton.disabled = true;
+  passwordDialogMessage.textContent = "正在保存...";
+  try {
+    await updatePostProtection(passwordTarget.id, { locked: true, readPassword: password });
+    closePasswordDialog();
+    await loadManagedPosts();
+    manageMessage.className = "form-message success";
+    manageMessage.textContent = "阅读密码已保存。";
+  } catch (error) {
+    passwordDialogMessage.textContent = error.message;
+  } finally {
+    savePasswordButton.disabled = false;
+  }
+});
+
+async function removePassword(post) {
+  if (!window.confirm(`确定取消《${post.title}》的阅读密码吗？取消后正文将公开可读。`)) return;
+  manageMessage.className = "form-message";
+  manageMessage.textContent = "正在取消阅读密码...";
+  try {
+    await updatePostProtection(post.id, { locked: false });
+    await loadManagedPosts();
+    manageMessage.className = "form-message success";
+    manageMessage.textContent = "已取消阅读密码。";
+  } catch (error) {
+    manageMessage.textContent = error.message;
+  }
+}
+
+document.querySelector("#closePasswordDialog").addEventListener("click", closePasswordDialog);
+document.querySelector("#cancelPasswordButton").addEventListener("click", closePasswordDialog);
+passwordDialog.addEventListener("close", () => { passwordTarget = null; });
 
 async function deletePost(id, title) {
   if (!window.confirm(`确定删除《${title}》吗？此操作不可恢复。`)) return;
@@ -152,3 +325,4 @@ async function deletePost(id, title) {
 }
 
 document.querySelector("#refreshPosts").addEventListener("click", loadManagedPosts);
+document.querySelector("#refreshComments").addEventListener("click", () => loadManagedPosts());

@@ -37,6 +37,32 @@
       <div id="managedPosts" class="managed-posts"></div>
       <p id="manageMessage" class="form-message" role="status"></p>
     </section>
+
+    <section id="commentManagePanel" class="admin-panel manage-panel" hidden>
+      <div class="editor-head"><div><p class="eyebrow"><span class="status-dot"></span> COMMENTS</p><h2>管理评论</h2></div><button id="refreshComments" class="text-button" type="button">刷新评论</button></div>
+      <div id="managedComments" class="managed-comments"></div>
+      <p id="commentManageMessage" class="form-message" role="status"></p>
+    </section>
+
+    <dialog id="passwordDialog" class="password-dialog" aria-labelledby="passwordDialogTitle">
+      <form id="passwordForm">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow"><span class="status-dot"></span> ARTICLE ACCESS</p>
+            <h2 id="passwordDialogTitle">设置阅读密码</h2>
+          </div>
+          <button id="closePasswordDialog" class="dialog-close" type="button" aria-label="关闭">×</button>
+        </div>
+        <p id="passwordDialogPost" class="dialog-post"></p>
+        <label>新密码<input id="managedPasswordInput" type="password" maxlength="128" autocomplete="new-password" required placeholder="输入读者访问正文时使用的密码"></label>
+        <label>确认密码<input id="managedPasswordConfirm" type="password" maxlength="128" autocomplete="new-password" required placeholder="再次输入密码"></label>
+        <div class="editor-actions">
+          <button id="savePasswordButton" class="primary-button" type="submit">保存密码</button>
+          <button id="cancelPasswordButton" class="text-button" type="button">取消</button>
+        </div>
+        <p id="passwordDialogMessage" class="form-message" role="alert"></p>
+      </form>
+    </dialog>
   </main>
   <script src="admin.js"></script>
 </body>

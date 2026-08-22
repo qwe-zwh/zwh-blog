@@ -6,22 +6,115 @@ const lockedPost = document.querySelector("#lockedPost");
 const unlockForm = document.querySelector("#unlockForm");
 const unlockPassword = document.querySelector("#unlockPassword");
 const unlockMessage = document.querySelector("#unlockMessage");
+const unlockButton = unlockForm.querySelector("button[type='submit']");
+const interactions = document.querySelector("#interactions");
+const likeButton = document.querySelector("#likeButton");
+const likeCount = document.querySelector("#likeCount");
+const commentForm = document.querySelector("#commentForm");
+const commentAuthor = document.querySelector("#commentAuthor");
+const commentContent = document.querySelector("#commentContent");
+const commentWebsite = document.querySelector("#commentWebsite");
+const commentSubmit = document.querySelector("#commentSubmit");
+const commentCounter = document.querySelector("#commentCounter");
+const commentMessage = document.querySelector("#commentMessage");
+const commentList = document.querySelector("#commentList");
+const commentEmpty = document.querySelector("#commentEmpty");
+const visitorKey = "zwh-visitor-id";
+const authorKey = "zwh-comment-author";
+let interactionsLoaded = false;
+let liked = false;
 
 function formatDate(iso) { return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso)).replaceAll("/", "."); }
 function text(node, value) { node.textContent = value; }
 
 function renderContent(post) {
   content.replaceChildren();
-  post.content.split(/\n\s*\n/).filter(Boolean).forEach(paragraph => { const p = document.createElement("p"); p.textContent = paragraph; content.append(p); });
+  String(post.content || "").split(/\n\s*\n/).filter(Boolean).forEach(paragraph => { const p = document.createElement("p"); p.textContent = paragraph; content.append(p); });
   lockedPost.hidden = true;
+  showInteractions();
+}
+
+function visitorId() {
+  let value = localStorage.getItem(visitorKey);
+  if (!value) {
+    value = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(visitorKey, value);
+  }
+  return value;
+}
+
+async function responseData(response, fallback) {
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || fallback);
+  return data;
+}
+
+function renderLike(state) {
+  liked = Boolean(state.liked);
+  likeCount.textContent = String(Number(state.count || 0));
+  likeButton.classList.toggle("liked", liked);
+  likeButton.setAttribute("aria-pressed", String(liked));
+  likeButton.querySelector(".like-heart").textContent = liked ? "♥" : "♡";
+}
+
+function renderComments(comments) {
+  commentList.replaceChildren();
+  comments.forEach(comment => {
+    const item = document.createElement("article");
+    item.className = "comment-item";
+    const meta = document.createElement("div");
+    meta.className = "comment-meta";
+    const author = document.createElement("strong");
+    author.className = "comment-author";
+    author.textContent = comment.author;
+    const time = document.createElement("time");
+    time.className = "comment-time";
+    time.dateTime = comment.createdAt;
+    time.textContent = new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(comment.createdAt));
+    const body = document.createElement("p");
+    body.className = "comment-body";
+    body.textContent = comment.content;
+    meta.append(author, time);
+    item.append(meta, body);
+    commentList.append(item);
+  });
+  commentEmpty.hidden = comments.length > 0;
+}
+
+async function loadInteractions() {
+  commentMessage.className = "comment-message";
+  commentMessage.textContent = "正在加载评论...";
+  try {
+    const [likesResponse, commentsResponse] = await Promise.all([
+      fetch(`/api/posts/${encodeURIComponent(id)}/likes`, { headers: { "X-Visitor-ID": visitorId() }, cache: "no-store" }),
+      fetch(`/api/posts/${encodeURIComponent(id)}/comments`, { cache: "no-store" }),
+    ]);
+    const [likeState, commentState] = await Promise.all([
+      responseData(likesResponse, "点赞信息加载失败。"),
+      responseData(commentsResponse, "评论加载失败。"),
+    ]);
+    renderLike(likeState);
+    renderComments(commentState.comments || []);
+    likeButton.disabled = false;
+    commentMessage.textContent = "";
+    interactionsLoaded = true;
+  } catch (exception) {
+    commentMessage.textContent = exception.message;
+  }
+}
+
+function showInteractions() {
+  interactions.hidden = false;
+  if (!interactionsLoaded) loadInteractions();
 }
 
 function renderPost(post) {
   document.title = `${post.title} | zwh 的博客`;
   text(document.querySelector("#postDate"), formatDate(post.createdAt));
   text(document.querySelector("#postTitle"), post.title);
-  document.querySelector("#postTags").innerHTML = post.tags.map(tag => `<span class="tag"></span>`).join("");
-  document.querySelectorAll("#postTags .tag").forEach((node, index) => text(node, post.tags[index]));
+  const tags = Array.isArray(post.tags) ? post.tags : [];
+  document.querySelector("#postTags").innerHTML = tags.map(() => `<span class="tag"></span>`).join("");
+  document.querySelectorAll("#postTags .tag").forEach((node, index) => text(node, tags[index]));
   article.hidden = false;
   if (post.locked) lockedPost.hidden = false;
   else renderContent(post);
@@ -30,19 +123,80 @@ function renderPost(post) {
 if (!id) {
   error.hidden = false;
 } else {
-  fetch(`/api/posts/${encodeURIComponent(id)}`).then(response => response.ok ? response.json() : Promise.reject()).then(renderPost).catch(() => { error.hidden = false; });
+  fetch(`/api/posts/${encodeURIComponent(id)}`, { cache: "no-store" })
+    .then(async response => {
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "文章加载失败。");
+      return data;
+    })
+    .then(renderPost)
+    .catch(() => { error.hidden = false; });
 }
 
 unlockForm.addEventListener("submit", async event => {
   event.preventDefault();
   unlockMessage.textContent = "正在验证...";
+  unlockButton.disabled = true;
   try {
     const response = await fetch(`/api/posts/${encodeURIComponent(id)}/unlock`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: unlockPassword.value }) });
-    const post = await response.json();
+    const post = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(post.error || "无法验证密码。");
     unlockPassword.value = "";
+    unlockMessage.textContent = "";
     renderContent(post);
   } catch (exception) {
     unlockMessage.textContent = exception.message;
+  } finally {
+    unlockButton.disabled = false;
+  }
+});
+
+likeButton.addEventListener("click", async () => {
+  likeButton.disabled = true;
+  try {
+    const response = await fetch(`/api/posts/${encodeURIComponent(id)}/likes`, {
+      method: liked ? "DELETE" : "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ visitorId: visitorId() }),
+    });
+    renderLike(await responseData(response, "点赞操作失败。"));
+  } catch (exception) {
+    commentMessage.className = "comment-message";
+    commentMessage.textContent = exception.message;
+  } finally {
+    likeButton.disabled = false;
+  }
+});
+
+commentAuthor.value = localStorage.getItem(authorKey) || "";
+commentContent.addEventListener("input", () => {
+  commentCounter.textContent = `${commentContent.value.length} / 800`;
+});
+
+commentForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  commentSubmit.disabled = true;
+  commentMessage.className = "comment-message";
+  commentMessage.textContent = "正在发布评论...";
+  try {
+    const response = await fetch(`/api/posts/${encodeURIComponent(id)}/comments`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ author: commentAuthor.value, content: commentContent.value, website: commentWebsite.value }),
+    });
+    await responseData(response, "评论发布失败。");
+    localStorage.setItem(authorKey, commentAuthor.value.trim());
+    commentContent.value = "";
+    commentWebsite.value = "";
+    commentCounter.textContent = "0 / 800";
+    const commentsResponse = await fetch(`/api/posts/${encodeURIComponent(id)}/comments`, { cache: "no-store" });
+    const commentState = await responseData(commentsResponse, "评论刷新失败。");
+    renderComments(commentState.comments || []);
+    commentMessage.className = "comment-message success";
+    commentMessage.textContent = "评论发布成功。";
+  } catch (exception) {
+    commentMessage.textContent = exception.message;
+  } finally {
+    commentSubmit.disabled = false;
   }
 });

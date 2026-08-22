@@ -3,4 +3,9 @@ compatibility_date = "2026-08-21"
 
 [[kv_namespaces]]
 binding = "POSTS"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "06b5ce9b6e7548e9993626a30104bb06"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "zwh-blog-interactions"
+database_id = "28cf1cf8-c13f-4b2f-b617-e3ca4469f665"

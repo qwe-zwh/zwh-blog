@@ -10,7 +10,40 @@
 <body>
   <main class="article-shell">
     <a class="brand" href="/index.html"><span class="brand-mark">z</span><span>zwh 的博客</span></a>
-    <article id="article" class="article" hidden><p id="postDate" class="post-date"></p><h1 id="postTitle"></h1><div id="postTags" class="post-tags"></div><section id="lockedPost" class="locked-post" hidden><p class="eyebrow"><span class="status-dot"></span> PASSWORD PROTECTED</p><h2>这篇文章需要阅读密码</h2><p>请输入作者设置的密码后继续阅读。</p><form id="unlockForm"><input id="unlockPassword" type="password" required placeholder="输入阅读密码" autocomplete="current-password"><button type="submit" class="unlock-button">查看文章</button></form><p id="unlockMessage" class="unlock-message" role="alert"></p></section><div id="postContent" class="article-content"></div></article>
+    <article id="article" class="article" hidden>
+      <p id="postDate" class="post-date"></p>
+      <h1 id="postTitle"></h1>
+      <div id="postTags" class="post-tags"></div>
+      <section id="lockedPost" class="locked-post" hidden>
+        <p class="eyebrow"><span class="status-dot"></span> PASSWORD PROTECTED</p>
+        <h2>这篇文章需要阅读密码</h2>
+        <p>请输入作者设置的密码后继续阅读。</p>
+        <form id="unlockForm"><input id="unlockPassword" type="password" required placeholder="输入阅读密码" autocomplete="current-password"><button type="submit" class="unlock-button">查看文章</button></form>
+        <p id="unlockMessage" class="unlock-message" role="alert"></p>
+      </section>
+      <div id="postContent" class="article-content"></div>
+    </article>
+
+    <section id="interactions" class="interactions" hidden>
+      <div class="like-row">
+        <div><p class="eyebrow"><span class="status-dot"></span> REACTION</p><h2>喜欢这篇文章吗？</h2></div>
+        <button id="likeButton" class="like-button" type="button" aria-pressed="false" disabled><span class="like-heart" aria-hidden="true">♡</span><span>喜欢</span><strong id="likeCount">0</strong></button>
+      </div>
+
+      <div class="comments-head">
+        <p class="eyebrow"><span class="status-dot"></span> DISCUSSION</p>
+        <h2>留下评论</h2>
+      </div>
+      <form id="commentForm" class="comment-form">
+        <label>昵称<input id="commentAuthor" name="author" required maxlength="24" autocomplete="nickname" placeholder="怎么称呼你"></label>
+        <label>评论<textarea id="commentContent" name="content" required maxlength="800" rows="5" placeholder="写下你的想法…"></textarea></label>
+        <label class="website-field" aria-hidden="true">网站<input id="commentWebsite" name="website" tabindex="-1" autocomplete="off"></label>
+        <div class="comment-actions"><button id="commentSubmit" class="comment-button" type="submit">发表评论</button><span id="commentCounter">0 / 800</span></div>
+        <p id="commentMessage" class="comment-message" role="status"></p>
+      </form>
+      <div id="commentList" class="comment-list" aria-live="polite"></div>
+      <p id="commentEmpty" class="comment-empty">还没有评论，来写下第一条吧。</p>
+    </section>
     <p id="articleError" class="empty-state" hidden>这篇文章不存在，或已被删除。</p>
   </main>
   <script src="post.js"></script>
