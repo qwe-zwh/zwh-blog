@@ -17,6 +17,8 @@
 .dialog-post { margin: 18px 0 0; color: var(--muted); font-size: 14px; }
 .password-dialog .editor-actions .text-button { margin-top: 26px; }
 .managed-comments { margin-top: 22px; }
+.edit-protection-note { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+.password-option.is-disabled { cursor: default; opacity: .6; }
 .managed-comment { padding: 18px 0; border-top: 1px solid var(--line); }
 .managed-comment-head { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; }
 .managed-comment-author { margin: 0; color: var(--ink); font-family: Georgia, "Songti SC", serif; font-size: 18px; }

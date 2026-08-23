@@ -8,6 +8,15 @@ function authorized(request, env) {
   return Boolean(env.ADMIN_TOKEN) && request.headers.get("Authorization") === `Bearer ${env.ADMIN_TOKEN}`;
 }
 
+function safeText(value, max) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function normalizeTags(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.map(tag => safeText(tag, 24)).filter(Boolean))].slice(0, 8);
+}
+
 async function passwordHash(password) {
   const digest = await crypto.subtle.digest("SHA-256", encoder.encode(password));
   return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
@@ -23,9 +32,43 @@ function readablePost(post) {
   return readable;
 }
 
-export async function onRequestGet({ env, params }) {
+export async function onRequestGet({ request, env, params }) {
   const post = await env.POSTS.get(`post:${params.id}`, "json");
-  return post ? json((post.locked || post.passwordHash) ? publicPost(post) : readablePost(post)) : json({ error: "Not found." }, 404);
+  if (!post) return json({ error: "Not found." }, 404);
+  if (authorized(request, env)) return json(readablePost(post));
+  return json((post.locked || post.passwordHash) ? publicPost(post) : readablePost(post));
+}
+
+export async function onRequestPut({ request, env, params }) {
+  if (!authorized(request, env)) return json({ error: "Unauthorized." }, 401);
+  const post = await env.POSTS.get(`post:${params.id}`, "json");
+  if (!post) return json({ error: "Not found." }, 404);
+
+  let input;
+  try {
+    input = await request.json();
+  } catch {
+    return json({ error: "Invalid JSON." }, 400);
+  }
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return json({ error: "Invalid JSON." }, 400);
+  }
+
+  const title = safeText(input.title, 120);
+  const excerpt = safeText(input.excerpt, 260);
+  const content = safeText(input.content, 20000);
+  const tags = normalizeTags(input.tags);
+  if (!title || !excerpt || !content) {
+    return json({ error: "Title, summary, and content are required." }, 400);
+  }
+
+  post.title = title;
+  post.excerpt = excerpt;
+  post.content = content;
+  post.tags = tags;
+  post.updatedAt = new Date().toISOString();
+  await env.POSTS.put(`post:${params.id}`, JSON.stringify(post));
+  return json(readablePost(post));
 }
 
 export async function onRequestPatch({ request, env, params }) {

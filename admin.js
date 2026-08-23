@@ -23,10 +23,36 @@ const savePasswordButton = document.querySelector("#savePasswordButton");
 const commentManagePanel = document.querySelector("#commentManagePanel");
 const managedComments = document.querySelector("#managedComments");
 const commentManageMessage = document.querySelector("#commentManageMessage");
+const postForm = document.querySelector("#postForm");
+const titleInput = document.querySelector("#titleInput");
+const excerptInput = document.querySelector("#excerptInput");
+const tagsInput = document.querySelector("#tagsInput");
+const contentInput = document.querySelector("#contentInput");
+const editorModeLabel = document.querySelector("#editorModeLabel");
+const editorTitle = document.querySelector("#editorTitle");
+const editProtectionNote = document.querySelector("#editProtectionNote");
+const cancelEditButton = document.querySelector("#cancelEditButton");
 let passwordTarget = null;
+let editingPostId = null;
 
 function token() { return sessionStorage.getItem(tokenKey); }
 function showEditor() { loginPanel.hidden = true; editorPanel.hidden = false; managePanel.hidden = false; commentManagePanel.hidden = false; loadManagedPosts(); }
+
+function resetEditorMode(resetForm = true) {
+  editingPostId = null;
+  if (resetForm) postForm.reset();
+  editorModeLabel.textContent = "DRAFT / ONLINE";
+  editorTitle.textContent = "发布文章";
+  publishButton.textContent = "发布文章";
+  cancelEditButton.hidden = true;
+  protectPostInput.disabled = false;
+  protectPostInput.closest(".password-option").classList.remove("is-disabled");
+  editProtectionNote.hidden = true;
+  editProtectionNote.textContent = "";
+  readPasswordField.hidden = !protectPostInput.checked;
+  readPasswordInput.required = protectPostInput.checked;
+  if (!protectPostInput.checked) readPasswordInput.value = "";
+}
 
 async function validateToken(value) {
   const response = await fetch("/api/auth", { method: "POST", headers: { authorization: `Bearer ${value}` } });
@@ -61,6 +87,7 @@ loginButton.addEventListener("click", async () => {
 
 document.querySelector("#logoutButton").addEventListener("click", () => {
   sessionStorage.removeItem(tokenKey);
+  resetEditorMode();
   editorPanel.hidden = true;
   managePanel.hidden = true;
   commentManagePanel.hidden = true;
@@ -74,17 +101,21 @@ protectPostInput.addEventListener("change", () => {
   if (!protectPostInput.checked) readPasswordInput.value = "";
 });
 
-document.querySelector("#postForm").addEventListener("submit", async event => {
+postForm.addEventListener("submit", async event => {
   event.preventDefault();
   const payload = {
-    title: document.querySelector("#titleInput").value,
-    excerpt: document.querySelector("#excerptInput").value,
-    content: document.querySelector("#contentInput").value,
-    tags: document.querySelector("#tagsInput").value.split(",").map(tag => tag.trim()).filter(Boolean),
-    locked: protectPostInput.checked,
-    readPassword: readPasswordInput.value,
+    title: titleInput.value,
+    excerpt: excerptInput.value,
+    content: contentInput.value,
+    tags: tagsInput.value.split(",").map(tag => tag.trim()).filter(Boolean),
   };
-  if (payload.locked && !payload.readPassword.trim()) {
+  const isEditing = Boolean(editingPostId);
+  const editedPostId = editingPostId;
+  if (!isEditing) {
+    payload.locked = protectPostInput.checked;
+    payload.readPassword = readPasswordInput.value;
+  }
+  if (!isEditing && payload.locked && !payload.readPassword.trim()) {
     formMessage.className = "form-message";
     formMessage.textContent = "已选择阅读密码，请先设置密码。";
     readPasswordInput.focus();
@@ -92,16 +123,19 @@ document.querySelector("#postForm").addEventListener("submit", async event => {
   }
   publishButton.disabled = true;
   formMessage.className = "form-message";
-  formMessage.textContent = "正在发布...";
+  formMessage.textContent = isEditing ? "正在保存修改..." : "正在发布...";
   try {
-    const response = await fetch("/api/posts", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token()}` }, body: JSON.stringify(payload) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "发布失败。请稍后重试。");
-    event.target.reset();
-    readPasswordField.hidden = true;
+    const response = await fetch(isEditing ? `/api/posts/${encodeURIComponent(editedPostId)}` : "/api/posts", {
+      method: isEditing ? "PUT" : "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${token()}` },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || (isEditing ? "保存失败。请稍后重试。" : "发布失败。请稍后重试。"));
+    resetEditorMode();
     formMessage.className = "form-message success";
-    formMessage.textContent = data.locked ? "发布成功：已启用阅读密码。" : "发布成功：文章公开可读。";
-    loadManagedPosts();
+    formMessage.textContent = isEditing ? "文章修改已保存。" : (data.locked ? "发布成功：已启用阅读密码。" : "发布成功：文章公开可读。");
+    await loadManagedPosts();
   } catch (error) {
     formMessage.textContent = error.message;
   } finally {
@@ -109,8 +143,53 @@ document.querySelector("#postForm").addEventListener("submit", async event => {
   }
 });
 
+cancelEditButton.addEventListener("click", () => {
+  resetEditorMode();
+  formMessage.className = "form-message";
+  formMessage.textContent = "已取消编辑。";
+});
+
 function formatDate(iso) {
   return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso)).replaceAll("/", ".");
+}
+
+async function editPost(post) {
+  manageMessage.className = "form-message";
+  manageMessage.textContent = `正在读取《${post.title}》...`;
+  try {
+    const response = await fetch(`/api/posts/${encodeURIComponent(post.id)}`, {
+      headers: { authorization: `Bearer ${token()}` },
+      cache: "no-store",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "文章内容读取失败。");
+    editingPostId = data.id;
+    titleInput.value = data.title || "";
+    excerptInput.value = data.excerpt || "";
+    tagsInput.value = Array.isArray(data.tags) ? data.tags.join(", ") : "";
+    contentInput.value = data.content || "";
+    editorModeLabel.textContent = "EDITING / ONLINE";
+    editorTitle.textContent = "编辑文章";
+    publishButton.textContent = "保存修改";
+    cancelEditButton.hidden = false;
+    protectPostInput.checked = Boolean(data.locked);
+    protectPostInput.disabled = true;
+    protectPostInput.closest(".password-option").classList.add("is-disabled");
+    readPasswordField.hidden = true;
+    readPasswordInput.required = false;
+    readPasswordInput.value = "";
+    editProtectionNote.hidden = false;
+    editProtectionNote.textContent = data.locked
+      ? "这篇文章的阅读密码会保持不变；如需更换或取消，请使用文章列表中的密码按钮。"
+      : "这篇文章会保持公开；如需添加阅读密码，请使用文章列表中的“设置密码”。";
+    formMessage.className = "form-message";
+    formMessage.textContent = "编辑完成后点击“保存修改”。";
+    manageMessage.textContent = "";
+    editorPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    titleInput.focus({ preventScroll: true });
+  } catch (error) {
+    manageMessage.textContent = error.message;
+  }
 }
 
 async function loadManagedPosts() {
@@ -145,6 +224,12 @@ async function loadManagedPosts() {
       info.append(title, meta);
       const actions = document.createElement("div");
       actions.className = "managed-post-actions";
+      const editButton = document.createElement("button");
+      editButton.className = "access-button";
+      editButton.type = "button";
+      editButton.textContent = "编辑";
+      editButton.addEventListener("click", () => editPost(post));
+      actions.append(editButton);
       const passwordButton = document.createElement("button");
       passwordButton.className = "access-button";
       passwordButton.type = "button";
@@ -318,6 +403,7 @@ async function deletePost(id, title) {
     const response = await fetch(`/api/posts/${encodeURIComponent(id)}`, { method: "DELETE", headers: { authorization: `Bearer ${token()}` } });
     const data = response.status === 204 ? null : await response.json();
     if (!response.ok) throw new Error(data?.error || "删除失败。");
+    if (editingPostId === id) resetEditorMode();
     await loadManagedPosts();
   } catch (error) {
     manageMessage.textContent = error.message;
