@@ -2,15 +2,17 @@
 
 .unlock-button:disabled { cursor: wait; opacity: .65; }
 
-.code-block { margin: 2em 0; overflow: hidden; border: 1px solid #303b35; border-radius: 5px; color: #e9eee9; background: #18201d; box-shadow: 0 12px 30px rgba(19, 27, 23, .13); }
-.code-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 0 10px 0 16px; border-bottom: 1px solid #303b35; background: #202a25; }
-.code-language { color: #a9b8af; font: 11px "SFMono-Regular", Consolas, monospace; letter-spacing: .06em; }
-.copy-code-button { padding: 6px 10px; border: 1px solid transparent; border-radius: 3px; color: #b7c5bd; background: transparent; cursor: pointer; font: 12px "Microsoft YaHei", sans-serif; transition: color .18s ease, border-color .18s ease, background .18s ease; }
-.copy-code-button:hover { border-color: #46554d; color: #fff; background: rgba(255, 255, 255, .04); }
-.copy-code-button.copied { color: #a9d8b5; }
+.code-block { margin: 2em 0; overflow: hidden; border: 1px solid #5e2750; border-radius: 6px; color: #f2edf1; background: #300a24; box-shadow: 0 14px 34px rgba(44, 0, 30, .24); }
+.code-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 0 10px 0 16px; border-bottom: 1px solid #5e2750; background: #2c001e; }
+.code-language { display: inline-flex; align-items: center; color: #d8bfd1; font: 11px "SFMono-Regular", Consolas, monospace; letter-spacing: .06em; }
+.code-language::before { width: 8px; height: 8px; margin-right: 38px; border-radius: 50%; background: #e95420; box-shadow: 14px 0 #f4c24f, 28px 0 #67c56f; content: ""; }
+.copy-code-button { padding: 6px 10px; border: 1px solid transparent; border-radius: 3px; color: #e1cfdb; background: transparent; cursor: pointer; font: 12px "Microsoft YaHei", sans-serif; transition: color .18s ease, border-color .18s ease, background .18s ease; }
+.copy-code-button:hover { border-color: #e95420; color: #fff; background: rgba(233, 84, 32, .14); }
+.copy-code-button.copied { color: #8ae234; }
 .copy-code-button:disabled { cursor: default; }
-.code-block pre { margin: 0; padding: 20px 22px 23px; overflow-x: auto; font: 13px/1.75 "SFMono-Regular", Consolas, "Liberation Mono", monospace; tab-size: 2; }
+.code-block pre { margin: 0; padding: 20px 22px 23px; overflow-x: auto; font: 13px/1.75 "Ubuntu Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace; tab-size: 2; scrollbar-color: #77216f #2c001e; }
 .code-block code { font: inherit; white-space: pre; }
+.code-block code::selection { color: #fff; background: #e95420; }
 .copy-fallback { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; opacity: 0; }
 
 .interactions { margin-top: 76px; padding-top: 38px; border-top: 1px solid var(--line); }
