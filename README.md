@@ -76,3 +76,16 @@ npx wrangler d1 execute zwh-blog-interactions --remote --file=./migrations/0001_
 - 已发布文章可在后台“管理文章”区域设置、更换或取消密码。
 - 阅读密码无法找回；更换密码不影响文章正文。
 - 密码仅以加盐哈希形式保存在 KV 中，加密文章的公开列表和详情接口不会返回正文。
+
+## 代码块与一键复制
+
+正文支持 Markdown 风格的围栏代码块。后台写作时使用三个反引号包住代码，并可在起始标记后填写语言：
+
+````text
+```js
+const greeting = "hello";
+console.log(greeting);
+```
+````
+
+文章页会显示语言标签和右上角“复制”按钮。代码始终通过 `textContent` 渲染，不会作为 HTML 执行。

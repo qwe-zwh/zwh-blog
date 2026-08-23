@@ -27,9 +27,130 @@ let liked = false;
 function formatDate(iso) { return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso)).replaceAll("/", "."); }
 function text(node, value) { node.textContent = value; }
 
+function parseContentBlocks(value) {
+  const blocks = [];
+  const textLines = [];
+  let codeLines = null;
+  let language = "";
+
+  function flushText() {
+    const raw = textLines.join("\n");
+    raw.split(/\n[ \t]*\n+/).forEach(paragraph => {
+      const value = paragraph.replace(/^\n+|\n+$/g, "");
+      if (value.trim()) blocks.push({ type: "paragraph", value });
+    });
+    textLines.length = 0;
+  }
+
+  String(value || "").replace(/\r\n?/g, "\n").split("\n").forEach(line => {
+    if (codeLines === null) {
+      const openingFence = /^```([^\s`]*)\s*$/.exec(line);
+      if (openingFence) {
+        flushText();
+        language = openingFence[1];
+        codeLines = [];
+      } else {
+        textLines.push(line);
+      }
+    } else if (/^```\s*$/.test(line)) {
+      blocks.push({ type: "code", value: codeLines.join("\n"), language });
+      codeLines = null;
+      language = "";
+    } else {
+      codeLines.push(line);
+    }
+  });
+
+  if (codeLines !== null) blocks.push({ type: "code", value: codeLines.join("\n"), language });
+  flushText();
+  return blocks;
+}
+
+function languageLabel(language) {
+  const labels = {
+    js: "JavaScript", javascript: "JavaScript", ts: "TypeScript", typescript: "TypeScript",
+    html: "HTML", css: "CSS", json: "JSON", sql: "SQL", py: "Python", python: "Python",
+    sh: "Shell", bash: "Shell", shell: "Shell", ps1: "PowerShell", powershell: "PowerShell",
+  };
+  return labels[language.toLowerCase()] || language || "Code";
+}
+
+function fallbackCopy(value) {
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.className = "copy-fallback";
+  document.body.append(textarea);
+  textarea.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } finally {
+    textarea.remove();
+  }
+  if (!copied) throw new Error("Copy command failed.");
+}
+
+async function copyText(value) {
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      // Some browsers deny the Clipboard API even on HTTPS; use the legacy fallback.
+    }
+  }
+  fallbackCopy(value);
+}
+
+function createCodeBlock(block) {
+  const wrapper = document.createElement("section");
+  wrapper.className = "code-block";
+  const toolbar = document.createElement("div");
+  toolbar.className = "code-toolbar";
+  const label = document.createElement("span");
+  label.className = "code-language";
+  label.textContent = languageLabel(block.language);
+  const copyButton = document.createElement("button");
+  copyButton.className = "copy-code-button";
+  copyButton.type = "button";
+  copyButton.setAttribute("aria-label", "复制代码");
+  copyButton.textContent = "复制";
+  copyButton.addEventListener("click", async () => {
+    copyButton.disabled = true;
+    try {
+      await copyText(block.value);
+      copyButton.classList.add("copied");
+      copyButton.textContent = "已复制";
+    } catch {
+      copyButton.textContent = "复制失败";
+    }
+    window.setTimeout(() => {
+      copyButton.disabled = false;
+      copyButton.classList.remove("copied");
+      copyButton.textContent = "复制";
+    }, 1600);
+  });
+  const pre = document.createElement("pre");
+  const code = document.createElement("code");
+  code.textContent = block.value;
+  pre.append(code);
+  toolbar.append(label, copyButton);
+  wrapper.append(toolbar, pre);
+  return wrapper;
+}
+
 function renderContent(post) {
   content.replaceChildren();
-  String(post.content || "").split(/\n\s*\n/).filter(Boolean).forEach(paragraph => { const p = document.createElement("p"); p.textContent = paragraph; content.append(p); });
+  parseContentBlocks(post.content).forEach(block => {
+    if (block.type === "code") {
+      content.append(createCodeBlock(block));
+    } else {
+      const paragraph = document.createElement("p");
+      paragraph.textContent = block.value;
+      content.append(paragraph);
+    }
+  });
   lockedPost.hidden = true;
   showInteractions();
 }

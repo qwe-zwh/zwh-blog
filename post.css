@@ -2,6 +2,17 @@
 
 .unlock-button:disabled { cursor: wait; opacity: .65; }
 
+.code-block { margin: 2em 0; overflow: hidden; border: 1px solid #303b35; border-radius: 5px; color: #e9eee9; background: #18201d; box-shadow: 0 12px 30px rgba(19, 27, 23, .13); }
+.code-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 0 10px 0 16px; border-bottom: 1px solid #303b35; background: #202a25; }
+.code-language { color: #a9b8af; font: 11px "SFMono-Regular", Consolas, monospace; letter-spacing: .06em; }
+.copy-code-button { padding: 6px 10px; border: 1px solid transparent; border-radius: 3px; color: #b7c5bd; background: transparent; cursor: pointer; font: 12px "Microsoft YaHei", sans-serif; transition: color .18s ease, border-color .18s ease, background .18s ease; }
+.copy-code-button:hover { border-color: #46554d; color: #fff; background: rgba(255, 255, 255, .04); }
+.copy-code-button.copied { color: #a9d8b5; }
+.copy-code-button:disabled { cursor: default; }
+.code-block pre { margin: 0; padding: 20px 22px 23px; overflow-x: auto; font: 13px/1.75 "SFMono-Regular", Consolas, "Liberation Mono", monospace; tab-size: 2; }
+.code-block code { font: inherit; white-space: pre; }
+.copy-fallback { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; opacity: 0; }
+
 .interactions { margin-top: 76px; padding-top: 38px; border-top: 1px solid var(--line); }
 .interactions h2 { margin: 7px 0 0; font-family: Georgia, "Songti SC", serif; font-size: 28px; font-weight: 400; }
 .interactions .eyebrow { margin: 0; }
