@@ -86,8 +86,8 @@ html[data-theme="dark"] .locked-post { border-color: var(--line); }
 .unlock-button:disabled, .comment-button:disabled { cursor: wait; opacity: .62; transform: none; }
 .unlock-message { min-height: 20px; margin-top: 11px !important; color: var(--coral) !important; font-size: 13px !important; }
 
-/* The terminal keeps its Ubuntu palette. A cool frame, stronger depth and an
-   opaque surface separate it from the translucent dark article card. */
+/* Light mode keeps the Ubuntu terminal; dark mode switches to a deep-blue
+   editor surface so code remains distinct from the purple article card. */
 .code-block {
   margin: 2.25em -8px;
   overflow: hidden;
@@ -100,9 +100,11 @@ html[data-theme="dark"] .locked-post { border-color: var(--line); }
   font-family: var(--sans);
 }
 html[data-theme="dark"] .code-block {
-  border-color: #a18898;
-  outline-color: rgba(214, 224, 233, .14);
-  box-shadow: 0 26px 60px rgba(0, 0, 0, .52), 0 0 0 1px rgba(255, 255, 255, .04), inset 0 1px rgba(255, 255, 255, .07);
+  border-color: #38577a;
+  outline-color: rgba(100, 153, 211, .13);
+  color: #e7effa;
+  background: #091426;
+  box-shadow: 0 26px 60px rgba(0, 5, 16, .58), 0 0 0 1px rgba(125, 171, 219, .07), inset 0 1px rgba(255, 255, 255, .06);
 }
 .code-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 12px 0 17px; border-bottom: 1px solid #6f4a62; background: #2c001e; }
 .code-language { display: inline-flex; align-items: center; color: #e0d1db; font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
@@ -126,6 +128,20 @@ html[data-theme="dark"] .code-block {
 .code-block code { font: inherit; white-space: pre; }
 .code-block code::selection { color: #fff; background: #146e91; }
 .copy-fallback { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; opacity: 0; }
+
+html[data-theme="dark"] .code-toolbar { border-bottom-color: #294663; background: #0d1b2e; }
+html[data-theme="dark"] .code-language { color: #adc3dc; }
+html[data-theme="dark"] .copy-code-button {
+  border-color: #315273;
+  color: #d6e5f7;
+  background: #142842;
+  box-shadow: 4px 4px 10px #030a13, -3px -3px 8px rgba(53, 91, 132, .28);
+}
+html[data-theme="dark"] .copy-code-button:hover { border-color: #64b5e8; color: #fff; }
+html[data-theme="dark"] .copy-code-button:active { box-shadow: inset 3px 3px 7px #030a13, inset -2px -2px 6px rgba(53, 91, 132, .25); }
+html[data-theme="dark"] .copy-code-button.copied { border-color: #4fc28a; color: #76e5ad; }
+html[data-theme="dark"] .code-block pre { background: #091426; scrollbar-color: #426b98 #06101e; }
+html[data-theme="dark"] .code-block code::selection { background: #255f8d; }
 
 .interactions {
   margin-top: 42px;
