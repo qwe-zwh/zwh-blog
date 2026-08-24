@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
   <title>发布文章 | zwh 的博客</title>
+  <script src="theme.js"></script>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="admin.css">
 </head>
-<body>
+<body class="admin-page">
   <main class="admin-shell">
-    <a class="brand" href="/index.html"><span class="brand-mark">z</span><span>zwh 的博客</span></a>
+    <header class="admin-topbar">
+      <a class="brand" href="/index.html"><span class="brand-mark">z</span><span>zwh 的博客</span></a>
+      <button class="icon-button" id="themeToggle" type="button" aria-label="切换深色模式" title="切换深色模式" aria-pressed="false">☾</button>
+    </header>
     <section id="loginPanel" class="admin-panel narrow">
       <p class="eyebrow"><span class="status-dot"></span> PRIVATE EDITOR</p>
       <h1>进入后台页面</h1>
