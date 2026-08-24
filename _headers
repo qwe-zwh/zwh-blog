@@ -5,3 +5,9 @@
   Strict-Transport-Security: max-age=31536000
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
+
+/admin
+  Cache-Control: no-cache
+
+/admin.html
+  Cache-Control: no-cache
