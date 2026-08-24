@@ -15,6 +15,8 @@
   backdrop-filter: blur(22px) saturate(1.25);
 }
 html[data-theme="dark"] .article-topbar { border-color: var(--line); background: rgba(44, 0, 30, .72); }
+.article-topbar-actions { display: flex; align-items: center; gap: 12px; }
+.article-topbar .icon-button { flex: 0 0 auto; margin-left: 0; }
 .back-button {
   padding: 9px 14px;
   border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
@@ -198,6 +200,7 @@ html[data-theme="dark"] .comment-item { border-color: var(--line); }
 
 @media (max-width: 480px) {
   .article-topbar .brand > span:last-child { display: none; }
+  .article-topbar-actions { gap: 9px; }
   .locked-post form { display: block; }
   .unlock-button { width: 100%; margin-top: 10px; }
   .copy-code-button { padding: 6px 9px; }
