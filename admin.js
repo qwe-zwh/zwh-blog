@@ -28,19 +28,99 @@ const titleInput = document.querySelector("#titleInput");
 const excerptInput = document.querySelector("#excerptInput");
 const tagsInput = document.querySelector("#tagsInput");
 const contentInput = document.querySelector("#contentInput");
+const imageInput = document.querySelector("#imageInput");
+const imageAltInput = document.querySelector("#imageAltInput");
+const uploadCoverButton = document.querySelector("#uploadCoverButton");
+const insertImageButton = document.querySelector("#insertImageButton");
+const coverPreview = document.querySelector("#coverPreview");
+const coverPreviewImage = document.querySelector("#coverPreviewImage");
+const removeCoverButton = document.querySelector("#removeCoverButton");
+const mediaMessage = document.querySelector("#mediaMessage");
 const editorModeLabel = document.querySelector("#editorModeLabel");
 const editorTitle = document.querySelector("#editorTitle");
 const editProtectionNote = document.querySelector("#editProtectionNote");
 const cancelEditButton = document.querySelector("#cancelEditButton");
 let passwordTarget = null;
 let editingPostId = null;
+let currentCoverImage = "";
 
 function token() { return sessionStorage.getItem(tokenKey); }
 function showEditor() { loginPanel.hidden = true; editorPanel.hidden = false; managePanel.hidden = false; commentManagePanel.hidden = false; loadManagedPosts(); }
 
+function setCoverImage(url) {
+  currentCoverImage = typeof url === "string" ? url : "";
+  coverPreview.hidden = !currentCoverImage;
+  if (currentCoverImage) coverPreviewImage.src = currentCoverImage;
+  else coverPreviewImage.removeAttribute("src");
+}
+
+function selectedImage() {
+  const image = imageInput.files?.[0];
+  if (!image) throw new Error("请先选择一张图片。");
+  if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(image.type)) {
+    throw new Error("仅支持 JPEG、PNG、WebP 或 GIF 图片。");
+  }
+  if (image.size <= 0 || image.size > 5 * 1024 * 1024) throw new Error("图片不能为空且不能超过 5 MB。");
+  return image;
+}
+
+async function uploadSelectedImage() {
+  const image = selectedImage();
+  const form = new FormData();
+  form.set("image", image);
+  const response = await fetch("/api/media", {
+    method: "POST",
+    headers: { authorization: `Bearer ${token()}` },
+    body: form,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.url) throw new Error(data.error || "图片上传失败。");
+  return { ...data, originalName: image.name };
+}
+
+function insertAtCursor(value) {
+  const start = contentInput.selectionStart ?? contentInput.value.length;
+  const end = contentInput.selectionEnd ?? start;
+  const before = contentInput.value.slice(0, start);
+  const after = contentInput.value.slice(end);
+  const prefix = before && !before.endsWith("\n") ? "\n" : "";
+  const suffix = after && !after.startsWith("\n") ? "\n" : "";
+  const inserted = `${prefix}${value}${suffix}`;
+  contentInput.setRangeText(inserted, start, end, "end");
+  contentInput.focus();
+}
+
+async function handleImageUpload(mode) {
+  uploadCoverButton.disabled = true;
+  insertImageButton.disabled = true;
+  mediaMessage.className = "form-message";
+  mediaMessage.textContent = "正在上传图片...";
+  try {
+    const uploaded = await uploadSelectedImage();
+    if (mode === "cover") {
+      setCoverImage(uploaded.url);
+      mediaMessage.textContent = "封面上传成功，保存文章后生效。";
+    } else {
+      const fallbackAlt = uploaded.originalName.replace(/\.[^.]+$/, "") || "文章图片";
+      const alt = (imageAltInput.value.trim() || fallbackAlt).replace(/[\[\]]/g, "").slice(0, 120);
+      insertAtCursor(`![${alt}](${uploaded.url})`);
+      mediaMessage.textContent = "图片已插入正文光标处。";
+    }
+    mediaMessage.className = "form-message success";
+    imageInput.value = "";
+  } catch (error) {
+    mediaMessage.textContent = error.message;
+  } finally {
+    uploadCoverButton.disabled = false;
+    insertImageButton.disabled = false;
+  }
+}
+
 function resetEditorMode(resetForm = true) {
   editingPostId = null;
   if (resetForm) postForm.reset();
+  setCoverImage("");
+  mediaMessage.textContent = "";
   editorModeLabel.textContent = "DRAFT / ONLINE";
   editorTitle.textContent = "发布文章";
   publishButton.textContent = "发布文章";
@@ -101,6 +181,14 @@ protectPostInput.addEventListener("change", () => {
   if (!protectPostInput.checked) readPasswordInput.value = "";
 });
 
+uploadCoverButton.addEventListener("click", () => handleImageUpload("cover"));
+insertImageButton.addEventListener("click", () => handleImageUpload("inline"));
+removeCoverButton.addEventListener("click", () => {
+  setCoverImage("");
+  mediaMessage.className = "form-message success";
+  mediaMessage.textContent = "封面已移除，保存文章后生效。";
+});
+
 postForm.addEventListener("submit", async event => {
   event.preventDefault();
   const payload = {
@@ -108,6 +196,7 @@ postForm.addEventListener("submit", async event => {
     excerpt: excerptInput.value,
     content: contentInput.value,
     tags: tagsInput.value.split(",").map(tag => tag.trim()).filter(Boolean),
+    coverImage: currentCoverImage,
   };
   const isEditing = Boolean(editingPostId);
   const editedPostId = editingPostId;
@@ -168,6 +257,7 @@ async function editPost(post) {
     excerptInput.value = data.excerpt || "";
     tagsInput.value = Array.isArray(data.tags) ? data.tags.join(", ") : "";
     contentInput.value = data.content || "";
+    setCoverImage(data.coverImage || "");
     editorModeLabel.textContent = "EDITING / ONLINE";
     editorTitle.textContent = "编辑文章";
     publishButton.textContent = "保存修改";

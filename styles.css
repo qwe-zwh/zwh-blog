@@ -216,6 +216,7 @@ html[data-theme="dark"] .post { border-color: var(--line); }
 .post:hover { border-color: color-mix(in srgb, var(--moss) 52%, var(--line)); transform: translateY(-5px); }
 .post > a { display: flex; min-height: 255px; flex-direction: column; }
 .post-card-head, .post-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.post-cover { display: block; width: 100%; aspect-ratio: 16 / 9; margin-top: 20px; border: 1px solid var(--line); border-radius: 17px; object-fit: cover; background: var(--paper-deep); }
 .post-index { display: grid; width: 35px; height: 35px; place-items: center; border-radius: 11px; color: var(--moss); background: color-mix(in srgb, var(--paper) 75%, transparent); box-shadow: var(--small-shadow); font: 10px var(--mono); }
 .post-date { color: var(--coral); font: 10px var(--mono); letter-spacing: .08em; }
 .post-title { margin: 25px 0 11px; font-family: var(--serif); font-size: 27px; line-height: 1.38; font-weight: 500; letter-spacing: -.025em; transition: color .2s ease; }
@@ -266,6 +267,7 @@ html[data-theme="dark"] .about-grid { border-color: var(--line); }
   .search-box { width: 100%; margin-top: 17px; }
   .post { padding: 24px; border-radius: 22px; }
   .post > a { min-height: 235px; }
+  .post-cover { border-radius: 14px; }
   .post-title { font-size: 24px; }
   .post-card-foot { align-items: flex-end; }
   .about-grid { display: block; padding: 28px; }

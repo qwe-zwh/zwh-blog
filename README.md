@@ -9,6 +9,7 @@
 - 新文章可设置阅读密码，未解锁时服务端不会返回正文
 - 后台可为已发布文章设置、更换或取消阅读密码
 - 后台可重新编辑已发布文章的标题、摘要、标签和正文
+- 后台可上传文章封面，并把图片插入正文
 - 文章点赞与取消点赞，同一浏览器重复点赞会自动去重
 - 文章评论、发布频率限制与后台评论管理
 - 归档与关于页面区块
@@ -62,6 +63,16 @@ npx wrangler d1 execute zwh-blog-interactions --remote --file=./migrations/0001_
 - Value: 密码管理器生成的随机字符串
 
 修改绑定或环境变量后需要重新部署项目。
+
+### 配置 Cloudinary 图片上传
+
+图片由 Cloudinary 托管，API 密钥只保存在 Cloudflare Pages Functions 服务端。在 Pages 项目的 Settings -> Environment variables 中添加：
+
+- `CLOUDINARY_CLOUD_NAME`：Cloudinary 控制台中的 Cloud name
+- `CLOUDINARY_API_KEY`：Cloudinary API Key
+- `CLOUDINARY_API_SECRET`：Cloudinary API Secret，必须设为 Secret
+
+重新部署后进入 `/admin.html`，在“文章图片”区域选择 JPEG、PNG、WebP 或 GIF（单张不超过 5 MB），可以上传为封面或插入正文。上传接口需要后台令牌，并会验证 MIME 类型、文件大小与真实文件头。删除文章或移除封面只会移除博客中的引用，不会自动删除 Cloudinary Media Library 中的源文件。
 
 站点通过 `_headers` 和 Pages Functions 中间件统一设置 CSP、防嵌入、HTTPS 与浏览器权限策略。API 仅供博客同源页面调用，不向其他 `ccwu.cc` 子域返回 CORS 许可。
 

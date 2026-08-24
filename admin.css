@@ -25,9 +25,23 @@
 .managed-comment-meta { margin: 4px 0 0; color: var(--muted); font: 11px "SFMono-Regular", Consolas, monospace; }
 .managed-comment-body { margin: 11px 0 0; color: var(--ink); font-size: 13px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
 
+.media-editor { margin: 26px 0 0; padding: 20px; border: 1px solid var(--line); }
+.media-editor legend { padding: 0 8px; color: var(--ink); font-family: Georgia, "Songti SC", serif; font-size: 18px; }
+.media-editor > .field-tip { display: block; margin: 0; line-height: 1.7; }
+.media-editor .media-file-label, .media-editor label { margin-top: 16px; }
+.media-editor input[type="file"] { padding: 9px; cursor: pointer; }
+.media-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 17px; }
+.media-actions button:disabled { cursor: wait; opacity: .62; }
+.cover-preview { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 16px; margin-top: 18px; padding: 12px; border: 1px solid var(--line); background: color-mix(in srgb, var(--paper) 78%, transparent); }
+.cover-preview[hidden] { display: none; }
+.cover-preview img { display: block; width: 150px; height: 90px; border-radius: 2px; object-fit: cover; background: var(--paper-deep); }
+.cover-preview p { margin: 0 0 9px; color: var(--muted); font-size: 12px; }
+
 @media (max-width: 600px) {
   .managed-post { display: block; }
   .managed-post-actions { margin-top: 12px; }
   .password-dialog { padding: 24px; }
   .managed-comment-head { align-items: flex-start; }
+  .cover-preview { grid-template-columns: 1fr; }
+  .cover-preview img { width: 100%; height: 170px; }
 }

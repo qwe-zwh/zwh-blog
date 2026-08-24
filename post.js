@@ -2,6 +2,8 @@ const id = new URLSearchParams(location.search).get("id");
 const article = document.querySelector("#article");
 const error = document.querySelector("#articleError");
 const content = document.querySelector("#postContent");
+const postCover = document.querySelector("#postCover");
+const postCoverImage = document.querySelector("#postCoverImage");
 const lockedPost = document.querySelector("#lockedPost");
 const unlockForm = document.querySelector("#unlockForm");
 const unlockPassword = document.querySelector("#unlockPassword");
@@ -27,6 +29,18 @@ let liked = false;
 function formatDate(iso) { return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso)).replaceAll("/", "."); }
 function text(node, value) { node.textContent = value; }
 
+function safeImageUrl(value) {
+  if (typeof value !== "string" || value.length > 1000) return "";
+  try {
+    const url = new URL(value, location.origin);
+    const cloudinary = url.protocol === "https:" && url.hostname === "res.cloudinary.com";
+    const local = url.origin === location.origin && (url.pathname.startsWith("/images/") || url.pathname.startsWith("/media/"));
+    return cloudinary || local ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
 function parseContentBlocks(value) {
   const blocks = [];
   const textLines = [];
@@ -50,7 +64,14 @@ function parseContentBlocks(value) {
         language = openingFence[1];
         codeLines = [];
       } else {
-        textLines.push(line);
+        const image = /^!\[([^\]]*)\]\(([^\s)]+)\)\s*$/.exec(line);
+        const imageUrl = image ? safeImageUrl(image[2]) : "";
+        if (image && imageUrl) {
+          flushText();
+          blocks.push({ type: "image", value: imageUrl, alt: image[1].slice(0, 120) });
+        } else {
+          textLines.push(line);
+        }
       }
     } else if (/^```\s*$/.test(line)) {
       blocks.push({ type: "code", value: codeLines.join("\n"), language });
@@ -140,11 +161,31 @@ function createCodeBlock(block) {
   return wrapper;
 }
 
+function createImageBlock(block) {
+  const figure = document.createElement("figure");
+  figure.className = "article-image";
+  const image = document.createElement("img");
+  image.src = block.value;
+  image.alt = block.alt;
+  image.loading = "lazy";
+  image.decoding = "async";
+  image.referrerPolicy = "no-referrer";
+  figure.append(image);
+  if (block.alt) {
+    const caption = document.createElement("figcaption");
+    caption.textContent = block.alt;
+    figure.append(caption);
+  }
+  return figure;
+}
+
 function renderContent(post) {
   content.replaceChildren();
   parseContentBlocks(post.content).forEach(block => {
     if (block.type === "code") {
       content.append(createCodeBlock(block));
+    } else if (block.type === "image") {
+      content.append(createImageBlock(block));
     } else {
       const paragraph = document.createElement("p");
       paragraph.textContent = block.value;
@@ -234,8 +275,22 @@ function renderPost(post) {
   text(document.querySelector("#postDate"), formatDate(post.createdAt));
   text(document.querySelector("#postTitle"), post.title);
   const tags = Array.isArray(post.tags) ? post.tags : [];
-  document.querySelector("#postTags").innerHTML = tags.map(() => `<span class="tag"></span>`).join("");
-  document.querySelectorAll("#postTags .tag").forEach((node, index) => text(node, tags[index]));
+  const postTags = document.querySelector("#postTags");
+  postTags.replaceChildren(...tags.map(tag => {
+    const node = document.createElement("span");
+    node.className = "tag";
+    node.textContent = tag;
+    return node;
+  }));
+  const coverUrl = safeImageUrl(post.coverImage);
+  postCover.hidden = !coverUrl;
+  if (coverUrl) {
+    postCoverImage.src = coverUrl;
+    postCoverImage.alt = `${post.title}的封面`;
+    postCoverImage.referrerPolicy = "no-referrer";
+  } else {
+    postCoverImage.removeAttribute("src");
+  }
   article.hidden = false;
   if (post.locked) lockedPost.hidden = false;
   else renderContent(post);

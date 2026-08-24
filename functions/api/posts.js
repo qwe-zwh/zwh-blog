@@ -20,6 +20,22 @@ function normalizeTags(value) {
   return [...new Set(value.map(tag => safeText(tag, 24)).filter(Boolean))].slice(0, 8);
 }
 
+function safeCoverImage(value, env) {
+  if (typeof value !== "string" || value.length > 1000) return "";
+  try {
+    const url = new URL(value);
+    const cloudName = typeof env.CLOUDINARY_CLOUD_NAME === "string" ? env.CLOUDINARY_CLOUD_NAME : "";
+    return url.protocol === "https:"
+      && url.hostname === "res.cloudinary.com"
+      && cloudName
+      && url.pathname.startsWith(`/${cloudName}/image/upload/`)
+      ? url.href
+      : "";
+  } catch {
+    return "";
+  }
+}
+
 function makeId() {
   return crypto.randomUUID();
 }
@@ -68,6 +84,7 @@ export async function onRequestPost({ request, env }) {
   const excerpt = safeText(input.excerpt, 260);
   const content = safeText(input.content, 20000);
   const tags = normalizeTags(input.tags);
+  const coverImage = safeCoverImage(input.coverImage, env);
   const readPassword = safePassword(input.readPassword);
   // A supplied reading password always protects the post, even if a stale browser
   // fails to submit the checkbox state.
@@ -90,6 +107,7 @@ export async function onRequestPost({ request, env }) {
     excerpt,
     content,
     tags,
+    coverImage,
     createdAt,
     locked,
     passwordSalt,

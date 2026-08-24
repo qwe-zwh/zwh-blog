@@ -17,6 +17,22 @@ function normalizeTags(value) {
   return [...new Set(value.map(tag => safeText(tag, 24)).filter(Boolean))].slice(0, 8);
 }
 
+function safeCoverImage(value, env) {
+  if (typeof value !== "string" || value.length > 1000) return "";
+  try {
+    const url = new URL(value);
+    const cloudName = typeof env.CLOUDINARY_CLOUD_NAME === "string" ? env.CLOUDINARY_CLOUD_NAME : "";
+    return url.protocol === "https:"
+      && url.hostname === "res.cloudinary.com"
+      && cloudName
+      && url.pathname.startsWith(`/${cloudName}/image/upload/`)
+      ? url.href
+      : "";
+  } catch {
+    return "";
+  }
+}
+
 async function passwordHash(password) {
   const digest = await crypto.subtle.digest("SHA-256", encoder.encode(password));
   return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
@@ -58,6 +74,7 @@ export async function onRequestPut({ request, env, params }) {
   const excerpt = safeText(input.excerpt, 260);
   const content = safeText(input.content, 20000);
   const tags = normalizeTags(input.tags);
+  const coverImage = safeCoverImage(input.coverImage, env);
   if (!title || !excerpt || !content) {
     return json({ error: "Title, summary, and content are required." }, 400);
   }
@@ -66,6 +83,7 @@ export async function onRequestPut({ request, env, params }) {
   post.excerpt = excerpt;
   post.content = content;
   post.tags = tags;
+  post.coverImage = coverImage;
   post.updatedAt = new Date().toISOString();
   await env.POSTS.put(`post:${params.id}`, JSON.stringify(post));
   return json(readablePost(post));

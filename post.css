@@ -76,9 +76,14 @@ html[data-theme="dark"] .article { border-color: #77216f; background: rgba(68, 1
 .article-kicker { margin-bottom: 16px; }
 .article h1 { max-width: 800px; margin: 0 0 24px; font-size: clamp(40px, 7vw, 66px); line-height: 1.18; }
 .article > .post-tags { padding-top: 19px; border-top: 1px solid var(--line); }
+.article-cover { margin: 34px 0 0; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: var(--paper-deep); }
+.article-cover img { display: block; width: 100%; max-height: 620px; aspect-ratio: 16 / 9; object-fit: cover; }
 .article-content { margin-top: 48px; color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 2.05; text-rendering: optimizeLegibility; }
 html[data-theme="light"] .article-content { color: #142b29; }
 .article-content p { margin: 0 0 1.6em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.article-image { margin: 2.1em 0; }
+.article-image img { display: block; width: 100%; max-height: 760px; border: 1px solid var(--line); border-radius: 16px; object-fit: contain; background: var(--paper-deep); }
+.article-image figcaption { margin-top: 9px; color: var(--muted); font: 11px/1.6 var(--sans); text-align: center; }
 
 .locked-post {
   max-width: 590px;
@@ -245,6 +250,8 @@ html[data-theme="dark"] .comment-item { border-color: var(--line); }
   .back-button { padding: 8px 11px; }
   .article { margin-top: 34px; padding: 30px 23px; border-radius: 25px; }
   .article h1 { font-size: clamp(37px, 12vw, 52px); }
+  .article-cover { margin-top: 27px; border-radius: 17px; }
+  .article-image img { border-radius: 11px; }
   .article-content { margin-top: 38px; font-size: 16px; line-height: 1.95; }
   .code-block { margin-right: -8px; margin-left: -8px; border-radius: 9px; outline-width: 4px; }
   .code-block pre { padding: 20px 18px 23px; }
