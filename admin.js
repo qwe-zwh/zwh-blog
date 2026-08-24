@@ -66,26 +66,51 @@ function selectedImage() {
 
 async function uploadSelectedImage() {
   const image = selectedImage();
-  const form = new FormData();
-  form.set("image", image);
-  const response = await fetch("/api/media", {
+  const signatureResponse = await fetch("/api/media", {
     method: "POST",
     headers: { authorization: `Bearer ${token()}` },
-    body: form,
   });
-  const responseText = await response.text();
-  let data = {};
+  const signatureText = await signatureResponse.text();
+  let signature = {};
   try {
-    data = responseText ? JSON.parse(responseText) : {};
+    signature = signatureText ? JSON.parse(signatureText) : {};
   } catch {
     // Cloudflare infrastructure errors can return an HTML page instead of JSON.
   }
-  if (!response.ok || !data.url) {
-    const requestId = response.headers.get("cf-ray");
+  if (!signatureResponse.ok || !signature.signature) {
+    const requestId = signatureResponse.headers.get("cf-ray");
     const suffix = requestId ? `，请求编号 ${requestId}` : "";
-    throw new Error(data.error || `图片上传失败（服务器 HTTP ${response.status}${suffix}）。`);
+    throw new Error(signature.error || `图片签名失败（服务器 HTTP ${signatureResponse.status}${suffix}）。`);
   }
-  return { ...data, originalName: image.name };
+
+  const form = new FormData();
+  form.set("file", image);
+  form.set("folder", signature.folder);
+  form.set("overwrite", signature.overwrite);
+  form.set("public_id", signature.publicId);
+  form.set("timestamp", signature.timestamp);
+  form.set("api_key", signature.apiKey);
+  form.set("signature", signature.signature);
+  const cloudinaryResponse = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(signature.cloudName)}/image/upload`, {
+    method: "POST",
+    body: form,
+  });
+  const cloudinaryText = await cloudinaryResponse.text();
+  let uploaded = {};
+  try {
+    uploaded = cloudinaryText ? JSON.parse(cloudinaryText) : {};
+  } catch {
+    // Keep the status-based message below when Cloudinary returns non-JSON.
+  }
+  if (!cloudinaryResponse.ok || typeof uploaded.secure_url !== "string") {
+    const detail = typeof uploaded?.error?.message === "string" ? `：${uploaded.error.message.slice(0, 180)}` : "";
+    throw new Error(`Cloudinary 上传失败（HTTP ${cloudinaryResponse.status}）${detail}`);
+  }
+  const uploadedUrl = new URL(uploaded.secure_url);
+  if (uploadedUrl.protocol !== "https:" || uploadedUrl.hostname !== "res.cloudinary.com") {
+    throw new Error("Cloudinary 返回了无效的图片地址。");
+  }
+  return { url: uploadedUrl.href, publicId: uploaded.public_id || "", originalName: image.name };
 }
 
 function insertAtCursor(value) {

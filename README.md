@@ -72,7 +72,7 @@ npx wrangler d1 execute zwh-blog-interactions --remote --file=./migrations/0001_
 - `CLOUDINARY_API_KEY`：Cloudinary API Key
 - `CLOUDINARY_API_SECRET`：Cloudinary API Secret，必须设为 Secret
 
-重新部署后进入 `/admin.html`，在“文章图片”区域选择 JPEG、PNG、WebP 或 GIF（单张不超过 5 MB），可以上传为封面或插入正文。上传接口需要后台令牌，并会验证 MIME 类型、文件大小与真实文件头。删除文章或移除封面只会移除博客中的引用，不会自动删除 Cloudinary Media Library 中的源文件。
+重新部署后进入 `/admin.html`，在“文章图片”区域选择 JPEG、PNG、WebP 或 GIF（单张不超过 5 MB），可以上传为封面或插入正文。后台令牌用于向 Pages Function 获取短时上传签名，API Secret 始终留在服务端；图片随后由浏览器直接上传到 Cloudinary，避免经过 Pages 中转。删除文章或移除封面只会移除博客中的引用，不会自动删除 Cloudinary Media Library 中的源文件。
 
 站点通过 `_headers` 和 Pages Functions 中间件统一设置 CSP、防嵌入、HTTPS 与浏览器权限策略。API 仅供博客同源页面调用，不向其他 `ccwu.cc` 子域返回 CORS 许可。
 
