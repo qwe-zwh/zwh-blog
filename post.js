@@ -2,8 +2,6 @@ const id = new URLSearchParams(location.search).get("id");
 const article = document.querySelector("#article");
 const error = document.querySelector("#articleError");
 const content = document.querySelector("#postContent");
-const postCover = document.querySelector("#postCover");
-const postCoverImage = document.querySelector("#postCoverImage");
 const lockedPost = document.querySelector("#lockedPost");
 const unlockForm = document.querySelector("#unlockForm");
 const unlockPassword = document.querySelector("#unlockPassword");
@@ -315,15 +313,6 @@ function renderPost(post) {
     node.textContent = tag;
     return node;
   }));
-  const coverUrl = safeImageUrl(post.coverImage);
-  postCover.hidden = !coverUrl;
-  if (coverUrl) {
-    postCoverImage.src = coverUrl;
-    postCoverImage.alt = `${post.title}的封面`;
-    postCoverImage.referrerPolicy = "no-referrer";
-  } else {
-    postCoverImage.removeAttribute("src");
-  }
   article.hidden = false;
   if (post.locked) lockedPost.hidden = false;
   else renderContent(post);
