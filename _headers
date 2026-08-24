@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'self'; base-uri 'none'; connect-src 'self' https://api.cloudinary.com; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: https://res.cloudinary.com; object-src 'none'; script-src 'self'; style-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'none'; connect-src 'self' https://api.cloudinary.com https://res.cloudinary.com; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: https://res.cloudinary.com; object-src 'none'; script-src 'self'; style-src 'self'; upgrade-insecure-requests
   Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), usb=()
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000

@@ -78,7 +78,7 @@ html[data-theme="dark"] .article { border-color: #77216f; background: rgba(68, 1
 .article > .post-tags { padding-top: 19px; border-top: 1px solid var(--line); }
 .article-cover { margin: 34px 0 0; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: var(--paper-deep); }
 .article-cover img { display: block; width: 100%; max-height: 620px; aspect-ratio: 16 / 9; object-fit: cover; }
-.article-content { margin-top: 48px; color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 2.05; text-rendering: optimizeLegibility; }
+.article-content { margin-top: 48px; color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 2.05; font-variant-numeric: lining-nums tabular-nums; font-feature-settings: "lnum" 1, "onum" 0, "tnum" 1; text-rendering: optimizeLegibility; }
 html[data-theme="light"] .article-content { color: #142b29; }
 .article-content p { margin: 0 0 1.6em; white-space: pre-wrap; overflow-wrap: anywhere; }
 .article-image { margin: 2.1em 0; }

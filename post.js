@@ -179,19 +179,52 @@ function createImageBlock(block) {
   return figure;
 }
 
+async function cloudinaryEtag(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" || parsed.hostname !== "res.cloudinary.com") return "";
+    const response = await fetch(parsed.href, { method: "HEAD", mode: "cors", cache: "force-cache" });
+    return response.ok ? response.headers.get("etag") || "" : "";
+  } catch {
+    return "";
+  }
+}
+
+async function removeDuplicateCoverImages(coverUrl, inlineImages) {
+  if (!coverUrl || !inlineImages.length) return;
+  const remaining = [];
+  inlineImages.forEach(item => {
+    if (item.url === coverUrl) item.node.remove();
+    else remaining.push(item);
+  });
+  if (!remaining.length) return;
+  const [coverEtag, ...inlineEtags] = await Promise.all([
+    cloudinaryEtag(coverUrl),
+    ...remaining.map(item => cloudinaryEtag(item.url)),
+  ]);
+  if (!coverEtag) return;
+  remaining.forEach((item, index) => {
+    if (inlineEtags[index] && inlineEtags[index] === coverEtag) item.node.remove();
+  });
+}
+
 function renderContent(post) {
   content.replaceChildren();
+  const inlineImages = [];
   parseContentBlocks(post.content).forEach(block => {
     if (block.type === "code") {
       content.append(createCodeBlock(block));
     } else if (block.type === "image") {
-      content.append(createImageBlock(block));
+      const image = createImageBlock(block);
+      inlineImages.push({ node: image, url: block.value });
+      content.append(image);
     } else {
       const paragraph = document.createElement("p");
       paragraph.textContent = block.value;
       content.append(paragraph);
     }
   });
+  removeDuplicateCoverImages(safeImageUrl(post.coverImage), inlineImages);
   lockedPost.hidden = true;
   showInteractions();
 }

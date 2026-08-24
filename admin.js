@@ -43,6 +43,7 @@ const cancelEditButton = document.querySelector("#cancelEditButton");
 let passwordTarget = null;
 let editingPostId = null;
 let currentCoverImage = "";
+let recentUpload = null;
 
 function token() { return sessionStorage.getItem(tokenKey); }
 function showEditor() { loginPanel.hidden = true; editorPanel.hidden = false; managePanel.hidden = false; commentManagePanel.hidden = false; loadManagedPosts(); }
@@ -64,8 +65,15 @@ function selectedImage() {
   return image;
 }
 
+async function fileFingerprint(image) {
+  const digest = await crypto.subtle.digest("SHA-256", await image.arrayBuffer());
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
 async function uploadSelectedImage() {
   const image = selectedImage();
+  const fingerprint = await fileFingerprint(image);
+  if (recentUpload?.fingerprint === fingerprint) return { ...recentUpload, originalName: image.name, reused: true };
   const signatureResponse = await fetch("/api/media", {
     method: "POST",
     headers: { authorization: `Bearer ${token()}` },
@@ -110,7 +118,8 @@ async function uploadSelectedImage() {
   if (uploadedUrl.protocol !== "https:" || uploadedUrl.hostname !== "res.cloudinary.com") {
     throw new Error("Cloudinary 返回了无效的图片地址。");
   }
-  return { url: uploadedUrl.href, publicId: uploaded.public_id || "", originalName: image.name };
+  recentUpload = { url: uploadedUrl.href, publicId: uploaded.public_id || "", fingerprint };
+  return { ...recentUpload, originalName: image.name, reused: false };
 }
 
 function insertAtCursor(value) {
@@ -125,6 +134,16 @@ function insertAtCursor(value) {
   contentInput.focus();
 }
 
+function removeImageFromContent(url) {
+  if (!url) return;
+  const lines = contentInput.value.replace(/\r\n?/g, "\n").split("\n");
+  const filtered = lines.filter(line => {
+    const image = /^!\[[^\]]*\]\(([^\s)]+)\)\s*$/.exec(line);
+    return !image || image[1] !== url;
+  });
+  contentInput.value = filtered.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
 async function handleImageUpload(mode) {
   uploadCoverButton.disabled = true;
   insertImageButton.disabled = true;
@@ -134,15 +153,22 @@ async function handleImageUpload(mode) {
     const uploaded = await uploadSelectedImage();
     if (mode === "cover") {
       setCoverImage(uploaded.url);
-      mediaMessage.textContent = "封面上传成功，保存文章后生效。";
+      removeImageFromContent(uploaded.url);
+      mediaMessage.textContent = uploaded.reused
+        ? "已复用刚上传的图片作为封面，并从正文中去重。"
+        : "封面上传成功，保存文章后生效。";
     } else {
-      const fallbackAlt = uploaded.originalName.replace(/\.[^.]+$/, "") || "文章图片";
-      const alt = (imageAltInput.value.trim() || fallbackAlt).replace(/[\[\]]/g, "").slice(0, 120);
-      insertAtCursor(`![${alt}](${uploaded.url})`);
-      mediaMessage.textContent = "图片已插入正文光标处。";
+      if (uploaded.url === currentCoverImage) {
+        removeImageFromContent(uploaded.url);
+        mediaMessage.textContent = "该图片已经是文章封面，不再重复插入正文。";
+      } else {
+        const fallbackAlt = uploaded.originalName.replace(/\.[^.]+$/, "") || "文章图片";
+        const alt = (imageAltInput.value.trim() || fallbackAlt).replace(/[\[\]]/g, "").slice(0, 120);
+        insertAtCursor(`![${alt}](${uploaded.url})`);
+        mediaMessage.textContent = uploaded.reused ? "已复用刚上传的图片并插入正文。" : "图片已插入正文光标处。";
+      }
     }
     mediaMessage.className = "form-message success";
-    imageInput.value = "";
   } catch (error) {
     mediaMessage.textContent = error.message;
   } finally {
@@ -154,6 +180,7 @@ async function handleImageUpload(mode) {
 function resetEditorMode(resetForm = true) {
   editingPostId = null;
   if (resetForm) postForm.reset();
+  recentUpload = null;
   setCoverImage("");
   mediaMessage.textContent = "";
   editorModeLabel.textContent = "DRAFT / ONLINE";
@@ -287,6 +314,8 @@ async function editPost(post) {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "文章内容读取失败。");
+    recentUpload = null;
+    imageInput.value = "";
     editingPostId = data.id;
     titleInput.value = data.title || "";
     excerptInput.value = data.excerpt || "";
