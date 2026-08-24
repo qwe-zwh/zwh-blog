@@ -42,11 +42,19 @@ function cloudinaryError(response, result) {
 export async function onRequestPost({ request, env }) {
   if (!authorized(request, env)) return json({ error: "Unauthorized." }, 401);
 
-  const cloudName = safeCloudName(env.CLOUDINARY_CLOUD_NAME);
-  const apiKey = typeof env.CLOUDINARY_API_KEY === "string" ? env.CLOUDINARY_API_KEY : "";
-  const apiSecret = typeof env.CLOUDINARY_API_SECRET === "string" ? env.CLOUDINARY_API_SECRET : "";
-  if (!cloudName || !apiKey || !apiSecret) {
-    return json({ error: "图片服务尚未配置完整。" }, 503);
+  const rawCloudName = typeof env.CLOUDINARY_CLOUD_NAME === "string" ? env.CLOUDINARY_CLOUD_NAME.trim() : "";
+  const cloudName = safeCloudName(rawCloudName);
+  const apiKey = typeof env.CLOUDINARY_API_KEY === "string" ? env.CLOUDINARY_API_KEY.trim() : "";
+  const apiSecret = typeof env.CLOUDINARY_API_SECRET === "string" ? env.CLOUDINARY_API_SECRET.trim() : "";
+  const missing = [];
+  if (!rawCloudName) missing.push("CLOUDINARY_CLOUD_NAME");
+  if (!apiKey) missing.push("CLOUDINARY_API_KEY");
+  if (!apiSecret) missing.push("CLOUDINARY_API_SECRET");
+  if (missing.length) {
+    return json({ error: `生产环境缺少：${missing.join("、")}。保存变量后请重新部署。` }, 503);
+  }
+  if (!cloudName) {
+    return json({ error: "CLOUDINARY_CLOUD_NAME 格式错误：只填写 Cloud name，不要填写网址或 cloudinary:// 开头的内容。" }, 503);
   }
 
   const contentType = request.headers.get("content-type") || "";
