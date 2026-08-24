@@ -27,7 +27,7 @@
         <label>标签<span class="field-tip">用逗号分隔，例如：技术, 随笔</span><input id="tagsInput" maxlength="180" placeholder="技术, 随笔"></label>
         <fieldset class="media-editor">
           <legend>文章图片</legend>
-          <p class="field-tip">支持 JPEG、PNG、WebP、GIF，单张不超过 5 MB。上传后可设为封面，或插入正文光标处。</p>
+          <p class="field-tip">支持 JPEG、PNG、WebP、GIF，单张不超过 5 MB。也可以把光标放进正文，直接按 Ctrl + V 粘贴截图。</p>
           <label class="media-file-label">选择图片<input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
           <label>图片说明（可选）<input id="imageAltInput" maxlength="120" placeholder="例如：项目首页截图"></label>
           <div class="media-actions">
@@ -40,7 +40,7 @@
           </div>
           <p id="mediaMessage" class="form-message" role="status"></p>
         </fieldset>
-        <label>正文<span class="field-tip">空行分段；用 ```js 和 ``` 包住代码；正文图片会保存为 ![说明](图片地址)。</span><textarea id="contentInput" required maxlength="20000" rows="16" placeholder="开始写作..."></textarea></label>
+        <label>正文<span class="field-tip">空行分段；用 ```js 和 ``` 包住代码；按 Ctrl + V 可在光标处上传并插入截图。</span><textarea id="contentInput" required maxlength="20000" rows="16" placeholder="开始写作，或直接粘贴截图..."></textarea></label>
         <label class="password-option"><input id="protectPostInput" type="checkbox"> 阅读文章需要密码</label>
         <p id="editProtectionNote" class="edit-protection-note" hidden></p>
         <label id="readPasswordField" hidden>阅读密码<span class="field-tip">该密码不能找回，请妥善保存。</span><input id="readPasswordInput" type="password" maxlength="128" autocomplete="new-password" placeholder="设置读者查看正文时需要输入的密码"></label>

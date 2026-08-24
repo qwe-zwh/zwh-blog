@@ -44,6 +44,7 @@ let passwordTarget = null;
 let editingPostId = null;
 let currentCoverImage = "";
 let recentUpload = null;
+let imageUploadInProgress = false;
 
 function token() { return sessionStorage.getItem(tokenKey); }
 function showEditor() { loginPanel.hidden = true; editorPanel.hidden = false; managePanel.hidden = false; commentManagePanel.hidden = false; loadManagedPosts(); }
@@ -55,8 +56,7 @@ function setCoverImage(url) {
   else coverPreviewImage.removeAttribute("src");
 }
 
-function selectedImage() {
-  const image = imageInput.files?.[0];
+function validateImage(image) {
   if (!image) throw new Error("请先选择一张图片。");
   if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(image.type)) {
     throw new Error("仅支持 JPEG、PNG、WebP 或 GIF 图片。");
@@ -65,13 +65,17 @@ function selectedImage() {
   return image;
 }
 
+function selectedImage() {
+  return validateImage(imageInput.files?.[0]);
+}
+
 async function fileFingerprint(image) {
   const digest = await crypto.subtle.digest("SHA-256", await image.arrayBuffer());
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function uploadSelectedImage() {
-  const image = selectedImage();
+async function uploadImage(image) {
+  validateImage(image);
   const fingerprint = await fileFingerprint(image);
   if (recentUpload?.fingerprint === fingerprint) return { ...recentUpload, originalName: image.name, reused: true };
   const signatureResponse = await fetch("/api/media", {
@@ -122,6 +126,10 @@ async function uploadSelectedImage() {
   return { ...recentUpload, originalName: image.name, reused: false };
 }
 
+function uploadSelectedImage() {
+  return uploadImage(selectedImage());
+}
+
 function insertAtCursor(value) {
   const start = contentInput.selectionStart ?? contentInput.value.length;
   const end = contentInput.selectionEnd ?? start;
@@ -144,9 +152,17 @@ function removeImageFromContent(url) {
   contentInput.value = filtered.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
+function setImageUploadBusy(busy) {
+  imageUploadInProgress = busy;
+  uploadCoverButton.disabled = busy;
+  insertImageButton.disabled = busy;
+  contentInput.classList.toggle("is-paste-uploading", busy);
+  contentInput.setAttribute("aria-busy", String(busy));
+}
+
 async function handleImageUpload(mode) {
-  uploadCoverButton.disabled = true;
-  insertImageButton.disabled = true;
+  if (imageUploadInProgress) return;
+  setImageUploadBusy(true);
   mediaMessage.className = "form-message";
   mediaMessage.textContent = "正在上传图片...";
   try {
@@ -172,10 +188,51 @@ async function handleImageUpload(mode) {
   } catch (error) {
     mediaMessage.textContent = error.message;
   } finally {
-    uploadCoverButton.disabled = false;
-    insertImageButton.disabled = false;
+    setImageUploadBusy(false);
   }
 }
+
+async function handlePastedImage(image) {
+  if (imageUploadInProgress) {
+    mediaMessage.textContent = "上一张图片仍在上传，请稍候。";
+    return;
+  }
+  const marker = `[[截图上传中-${crypto.randomUUID()}]]`;
+  insertAtCursor(marker);
+  setImageUploadBusy(true);
+  mediaMessage.className = "form-message";
+  mediaMessage.textContent = "正在上传粘贴的截图...";
+  try {
+    const uploaded = await uploadImage(image);
+    const fallbackAlt = image.name.replace(/\.[^.]+$/, "") || "粘贴截图";
+    const alt = (imageAltInput.value.trim() || fallbackAlt).replace(/[\[\]]/g, "").slice(0, 120);
+    const replacement = uploaded.url === currentCoverImage ? "" : `![${alt}](${uploaded.url})`;
+    const markerIndex = contentInput.value.indexOf(marker);
+    if (markerIndex >= 0) {
+      contentInput.value = contentInput.value.replace(marker, replacement).replace(/\n{3,}/g, "\n\n");
+      const cursor = Math.min(markerIndex + replacement.length, contentInput.value.length);
+      contentInput.setSelectionRange(cursor, cursor);
+    }
+    mediaMessage.className = "form-message success";
+    mediaMessage.textContent = replacement
+      ? "截图已上传并插入正文光标处。"
+      : "该截图已经是文章封面，不再重复插入正文。";
+  } catch (error) {
+    contentInput.value = contentInput.value.replace(marker, "").replace(/\n{3,}/g, "\n\n");
+    mediaMessage.textContent = error.message;
+  } finally {
+    setImageUploadBusy(false);
+    contentInput.focus();
+  }
+}
+
+contentInput.addEventListener("paste", event => {
+  const imageItem = Array.from(event.clipboardData?.items || []).find(item => item.kind === "file" && item.type.startsWith("image/"));
+  if (!imageItem) return;
+  event.preventDefault();
+  const image = imageItem.getAsFile();
+  if (image) handlePastedImage(image);
+});
 
 function resetEditorMode(resetForm = true) {
   editingPostId = null;

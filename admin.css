@@ -36,6 +36,7 @@
 .cover-preview[hidden] { display: none; }
 .cover-preview img { display: block; width: 150px; height: 90px; border-radius: 2px; object-fit: cover; background: var(--paper-deep); }
 .cover-preview p { margin: 0 0 9px; color: var(--muted); font-size: 12px; }
+.admin-panel textarea.is-paste-uploading { border-color: var(--moss); box-shadow: 0 0 0 3px color-mix(in srgb, var(--moss) 18%, transparent); }
 
 @media (max-width: 600px) {
   .managed-post { display: block; }
