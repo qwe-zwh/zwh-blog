@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="zwh 的个人博客，记录技术、阅读和日常思考。">
   <title>zwh 的博客</title>
+  <script src="theme.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="home-page">
   <div class="site-shell">
     <header class="topbar">
       <a class="brand" href="#home" aria-label="返回首页">
@@ -19,7 +20,7 @@
         <a href="#archive">归档</a>
         <a href="#about">关于</a>
       </nav>
-      <button class="icon-button" id="themeToggle" type="button" aria-label="切换深色模式" title="切换深色模式">◐</button>
+      <button class="icon-button" id="themeToggle" type="button" aria-label="切换深色模式" title="切换深色模式" aria-pressed="false">☾</button>
     </header>
 
     <main id="home" class="main-content">
@@ -30,6 +31,7 @@
           <p class="intro-text">这里是 zwh 的个人空间，记录技术实践、阅读片段，也记录那些值得慢慢想明白的日常。</p>
         </div>
         <div class="intro-aside" aria-label="博客信息">
+          <span class="visual-number" aria-hidden="true">07</span>
           <div class="code-note"><span>const</span> mood = <b>"curious"</b>;</div>
           <div class="line-art" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
           <p>最后更新<br><strong id="lastUpdated">2026 / 08 / 20</strong></p>
@@ -37,7 +39,7 @@
       </section>
 
       <section class="toolbar" aria-label="文章工具栏">
-        <div class="section-label"><span class="rule"></span><span id="sectionTitle">精选文章</span></div>
+        <div class="section-label"><span class="rule"></span><span id="sectionTitle">最新文章</span></div>
         <label class="search-box" for="searchInput">
           <span aria-hidden="true">⌕</span>
           <input id="searchInput" type="search" placeholder="搜索文章、标签或关键词" autocomplete="off">

@@ -8,13 +8,13 @@ const input = document.querySelector('#searchInput');
 function renderPosts(keyword = '') {
   const query = keyword.trim().toLowerCase();
   const filtered = posts.filter(post => [post.title, post.excerpt, ...post.tags].join(' ').toLowerCase().includes(query));
-  list.innerHTML = filtered.map(post => `
+  list.innerHTML = filtered.map((post, index) => `
     <article class="post">
       <a href="${post.id ? `post.html?id=${encodeURIComponent(post.id)}` : '#'}" aria-label="阅读：${post.title}">
-        <div class="post-date">${post.date}</div>
+        <div class="post-card-head"><span class="post-index">${String(index + 1).padStart(2, "0")}</span><time class="post-date">${post.date}</time></div>
         <h2 class="post-title">${post.title}</h2>
         <p class="post-excerpt">${post.excerpt}</p>
-        <div class="post-tags">${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>
+        <div class="post-card-foot"><div class="post-tags">${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div><span class="read-more">阅读 <b>↗</b></span></div>
       </a>
     </article>`).join('');
   empty.hidden = filtered.length !== 0;
@@ -38,10 +38,3 @@ document.addEventListener('keydown', event => {
   if (event.key === '/' && document.activeElement !== input) { event.preventDefault(); input.focus(); }
   if (event.key === 'Escape') { input.value = ''; renderPosts(); input.blur(); }
 });
-
-document.querySelector('#themeToggle').addEventListener('click', () => {
-  document.body.classList.toggle('dark');
-  const dark = document.body.classList.contains('dark');
-  localStorage.setItem('zwh-theme', dark ? 'dark' : 'light');
-});
-if (localStorage.getItem('zwh-theme') === 'dark') document.body.classList.add('dark');
