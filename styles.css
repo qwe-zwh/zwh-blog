@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --paper: #e9f1f0;
   --paper-deep: #dce8e6;
   --surface: rgba(255, 255, 255, .64);
@@ -18,6 +19,7 @@
 }
 
 html[data-theme="dark"] {
+  color-scheme: dark;
   --paper: #1b0715;
   --paper-deep: #25091d;
   --surface: rgba(48, 10, 36, .7);

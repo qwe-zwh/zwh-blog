@@ -12,7 +12,6 @@
   function applyTheme(theme) {
     const normalized = theme === "dark" ? "dark" : "light";
     document.documentElement.dataset.theme = normalized;
-    document.documentElement.style.colorScheme = normalized;
     const button = document.querySelector("#themeToggle");
     if (button) {
       const dark = normalized === "dark";

@@ -63,6 +63,8 @@ npx wrangler d1 execute zwh-blog-interactions --remote --file=./migrations/0001_
 
 修改绑定或环境变量后需要重新部署项目。
 
+站点通过 `_headers` 和 Pages Functions 中间件统一设置 CSP、防嵌入、HTTPS 与浏览器权限策略。API 仅供博客同源页面调用，不向其他 `ccwu.cc` 子域返回 CORS 许可。
+
 部署设置：
 
 - Framework preset: `None`

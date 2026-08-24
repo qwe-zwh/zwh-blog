@@ -1,15 +1,10 @@
 const encoder = new TextEncoder();
 
-function json(data, status = 200, headers = {}) {
+function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers },
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
   });
-}
-
-function cors(request) {
-  const origin = request.headers.get("Origin") || "";
-  return origin.endsWith(".ccwu.cc") ? origin : "";
 }
 
 function safeText(value, max) {
@@ -52,23 +47,21 @@ function publicPost(post) {
   return { ...metadata, locked: Boolean(post.locked || passwordHash) };
 }
 
-export async function onRequestGet({ env, request }) {
-  const origin = cors(request);
+export async function onRequestGet({ env }) {
   const posts = await getPosts(env);
-  return json(posts.map(publicPost), 200, { "access-control-allow-origin": origin });
+  return json(posts.map(publicPost));
 }
 
 export async function onRequestPost({ request, env }) {
-  const origin = cors(request);
   if (!isAuthorized(request, env)) {
-    return json({ error: "Unauthorized." }, 401, { "access-control-allow-origin": origin });
+    return json({ error: "Unauthorized." }, 401);
   }
 
   let input;
   try {
     input = await request.json();
   } catch {
-    return json({ error: "Invalid JSON." }, 400, { "access-control-allow-origin": origin });
+    return json({ error: "Invalid JSON." }, 400);
   }
 
   const title = safeText(input.title, 120);
@@ -81,11 +74,11 @@ export async function onRequestPost({ request, env }) {
   const locked = input.locked === true || Boolean(readPassword);
 
   if (!title || !excerpt || !content) {
-    return json({ error: "Title, summary, and content are required." }, 400, { "access-control-allow-origin": origin });
+    return json({ error: "Title, summary, and content are required." }, 400);
   }
 
   if (locked && !readPassword.trim()) {
-    return json({ error: "阅读密码不能为空。" }, 400, { "access-control-allow-origin": origin });
+    return json({ error: "阅读密码不能为空。" }, 400);
   }
 
   const id = makeId();
@@ -105,16 +98,5 @@ export async function onRequestPost({ request, env }) {
   const ids = (await env.POSTS.get("index", "json")) || [];
   await env.POSTS.put(`post:${id}`, JSON.stringify(post));
   await env.POSTS.put("index", JSON.stringify([id, ...ids]));
-  return json(publicPost(post), 201, { "access-control-allow-origin": origin });
-}
-
-export async function onRequestOptions({ request }) {
-  const origin = cors(request);
-  return new Response(null, {
-    headers: {
-      "access-control-allow-origin": origin,
-      "access-control-allow-methods": "GET, POST, OPTIONS",
-      "access-control-allow-headers": "content-type, authorization",
-    },
-  });
+  return json(publicPost(post), 201);
 }
