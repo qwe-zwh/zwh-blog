@@ -28,6 +28,17 @@ function safeCloudName(value) {
   return typeof value === "string" && /^[a-zA-Z0-9_-]{1,80}$/.test(value) ? value : "";
 }
 
+function cloudinaryError(response, result) {
+  if (response.status === 401) return "Cloudinary 拒绝了凭据，请检查 API Key 和 API Secret。";
+  if (response.status === 403) return "Cloudinary 拒绝了上传操作，请检查账户权限或用量限制。";
+  if (response.status === 404) return "找不到 Cloudinary 环境，请检查 Cloud name。";
+  if (response.status === 420 || response.status === 429) return "Cloudinary 当前请求过多，请稍后再试。";
+  const message = typeof result?.error?.message === "string"
+    ? result.error.message.replace(/[\r\n\t]+/g, " ").trim().slice(0, 180)
+    : "";
+  return message ? `Cloudinary：${message}` : `图片上传失败（Cloudinary HTTP ${response.status || "未知"}）。`;
+}
+
 export async function onRequestPost({ request, env }) {
   if (!authorized(request, env)) return json({ error: "Unauthorized." }, 401);
 
@@ -85,7 +96,9 @@ export async function onRequestPost({ request, env }) {
 
   const result = await cloudinaryResponse.json().catch(() => ({}));
   if (!cloudinaryResponse.ok || typeof result.secure_url !== "string") {
-    return json({ error: "图片上传失败，请检查 Cloudinary 配置。" }, 502);
+    const error = cloudinaryError(cloudinaryResponse, result);
+    console.error("Cloudinary upload failed", { status: cloudinaryResponse.status, message: error });
+    return json({ error }, 502);
   }
 
   return json({
