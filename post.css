@@ -124,12 +124,12 @@ html[data-theme="dark"] .locked-post { border-color: var(--line); }
 .code-block {
   margin: 2.25em -8px;
   overflow: hidden;
-  border: 1px solid #8a7182;
+  border: 1px solid #a594a1;
   border-radius: 12px;
   outline: 3px solid rgba(112, 128, 145, .09);
-  color: #f2edf1;
-  background: #300a24;
-  box-shadow: 0 10px 22px rgba(24, 0, 16, .24), inset 0 1px rgba(255, 255, 255, .06);
+  color: #fbf7fa;
+  background: #55404f;
+  box-shadow: 0 9px 20px rgba(58, 40, 53, .2), inset 0 1px rgba(255, 255, 255, .08);
   font-family: var(--sans);
 }
 html[data-theme="dark"] .code-block {
@@ -139,25 +139,25 @@ html[data-theme="dark"] .code-block {
   background: #091426;
   box-shadow: 0 12px 25px rgba(0, 5, 16, .42), 0 0 0 1px rgba(125, 171, 219, .07), inset 0 1px rgba(255, 255, 255, .06);
 }
-.code-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 12px 0 17px; border-bottom: 1px solid #6f4a62; background: #2c001e; }
-.code-language { display: inline-flex; align-items: center; color: #e0d1db; font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.code-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 12px 0 17px; border-bottom: 1px solid #806b7a; background: #473440; }
+.code-language { display: inline-flex; align-items: center; color: #eee5eb; font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 .code-language::before { width: 8px; height: 8px; margin-right: 39px; border-radius: 50%; background: #e95420; box-shadow: 14px 0 #f4c24f, 28px 0 #67c56f; content: ""; }
 .copy-code-button {
   padding: 7px 12px;
-  border: 1px solid #70425f;
+  border: 1px solid #806c7b;
   border-radius: 8px;
-  color: #eadde6;
-  background: #3a0e2d;
-  box-shadow: 4px 4px 9px #190011, -3px -3px 8px rgba(113, 49, 91, .45);
+  color: #f3ebf0;
+  background: #604b5a;
+  box-shadow: 3px 3px 7px #3c2b37, -2px -2px 6px rgba(255, 255, 255, .08);
   cursor: pointer;
   font: 11px var(--sans);
   transition: color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 .copy-code-button:hover { border-color: #f4c24f; color: #fff; transform: translateY(-1px); }
-.copy-code-button:active { box-shadow: inset 3px 3px 7px #190011, inset -2px -2px 6px rgba(113, 49, 91, .4); transform: none; }
+.copy-code-button:active { box-shadow: inset 3px 3px 7px #382733, inset -2px -2px 6px rgba(255, 255, 255, .07); transform: none; }
 .copy-code-button.copied { border-color: #67c56f; color: #8ae234; }
 .copy-code-button:disabled { cursor: default; }
-.code-block pre { margin: 0; padding: 24px 25px 27px; overflow-x: auto; background: #300a24; font: 13px/1.8 "Ubuntu Mono", var(--mono); tab-size: 2; scrollbar-color: #9b6a8d #210517; }
+.code-block pre { margin: 0; padding: 24px 25px 27px; overflow-x: auto; background: #55404f; font: 13px/1.8 "Ubuntu Mono", var(--mono); tab-size: 2; scrollbar-color: #ad94a7 #40313d; }
 .code-block code { font: inherit; white-space: pre; }
 .code-block code::selection { color: #fff; background: #146e91; }
 .copy-fallback { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; opacity: 0; }
