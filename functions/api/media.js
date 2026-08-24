@@ -39,7 +39,7 @@ function cloudinaryError(response, result) {
   return message ? `Cloudinary：${message}` : `图片上传失败（Cloudinary HTTP ${response.status || "未知"}）。`;
 }
 
-export async function onRequestPost({ request, env }) {
+async function uploadImage({ request, env }) {
   if (!authorized(request, env)) return json({ error: "Unauthorized." }, 401);
 
   const rawCloudName = typeof env.CLOUDINARY_CLOUD_NAME === "string" ? env.CLOUDINARY_CLOUD_NAME.trim() : "";
@@ -86,7 +86,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   const upload = new FormData();
-  upload.set("file", new Blob([bytes], { type: image.type }), typeof image.name === "string" ? image.name.slice(0, 180) : "image");
+  upload.set("file", image);
   upload.set("folder", "zwh-blog");
   upload.set("public_id", crypto.randomUUID());
   upload.set("overwrite", "false");
@@ -117,4 +117,16 @@ export async function onRequestPost({ request, env }) {
     bytes: Number(result.bytes) || image.size,
     format: typeof result.format === "string" ? result.format : "",
   }, 201);
+}
+
+export async function onRequestPost(context) {
+  try {
+    return await uploadImage(context);
+  } catch (exception) {
+    const detail = exception instanceof Error
+      ? exception.message.replace(/[\r\n\t]+/g, " ").trim().slice(0, 180)
+      : "未知运行时错误";
+    console.error("Media upload runtime failure", { name: exception?.name || "Error", message: detail });
+    return json({ error: `图片上传接口内部错误（HTTP 500）：${detail}` }, 500);
+  }
 }

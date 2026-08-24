@@ -73,8 +73,18 @@ async function uploadSelectedImage() {
     headers: { authorization: `Bearer ${token()}` },
     body: form,
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.url) throw new Error(data.error || "图片上传失败。");
+  const responseText = await response.text();
+  let data = {};
+  try {
+    data = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    // Cloudflare infrastructure errors can return an HTML page instead of JSON.
+  }
+  if (!response.ok || !data.url) {
+    const requestId = response.headers.get("cf-ray");
+    const suffix = requestId ? `，请求编号 ${requestId}` : "";
+    throw new Error(data.error || `图片上传失败（服务器 HTTP ${response.status}${suffix}）。`);
+  }
   return { ...data, originalName: image.name };
 }
 
