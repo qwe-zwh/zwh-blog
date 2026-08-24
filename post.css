@@ -1,20 +1,13 @@
 .article-shell { position: relative; z-index: 1; width: min(980px, calc(100% - 40px)); margin: 0 auto; padding: 18px 0 110px; }
 html[data-theme="light"] body.article-page {
-  background:
-    linear-gradient(90deg,
-      #d8e5e3 0,
-      #e0ebe9 calc(50% - 540px),
-      #edf5f4 calc(50% - 539px),
-      #edf5f4 calc(50% + 539px),
-      #e0ebe9 calc(50% + 540px),
-      #d8e5e3 100%);
+  background: #edf5f4;
 }
 html[data-theme="light"] body.article-page::before,
 html[data-theme="light"] body.article-page::after {
   z-index: 0;
   top: 0;
   bottom: 0;
-  width: max(0px, calc((100vw - 1080px) / 2));
+  width: max(0px, calc((100vw - 980px) / 2));
   height: auto;
   border-radius: 0;
   background-color: rgba(205, 222, 219, .72);
