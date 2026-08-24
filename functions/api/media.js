@@ -28,6 +28,11 @@ function safeCloudName(value) {
   return typeof value === "string" && /^[a-zA-Z0-9_-]{1,80}$/.test(value) ? value : "";
 }
 
+async function sha1(value) {
+  const digest = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
 function cloudinaryError(response, result) {
   if (response.status === 401) return "Cloudinary 拒绝了凭据，请检查 API Key 和 API Secret。";
   if (response.status === 403) return "Cloudinary 拒绝了上传操作，请检查账户权限或用量限制。";
@@ -85,17 +90,21 @@ async function uploadImage({ request, env }) {
     return json({ error: "图片内容与文件类型不一致。" }, 415);
   }
 
+  const publicId = crypto.randomUUID();
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const signature = await sha1(`folder=zwh-blog&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`);
   const upload = new FormData();
   upload.set("file", image);
   upload.set("folder", "zwh-blog");
-  upload.set("public_id", crypto.randomUUID());
-  upload.set("overwrite", "false");
+  upload.set("public_id", publicId);
+  upload.set("timestamp", timestamp);
+  upload.set("api_key", apiKey);
+  upload.set("signature", signature);
 
   let cloudinaryResponse;
   try {
     cloudinaryResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
       method: "POST",
-      headers: { authorization: `Basic ${btoa(`${apiKey}:${apiSecret}`)}` },
       body: upload,
     });
   } catch {
