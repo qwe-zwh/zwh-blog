@@ -6,7 +6,7 @@
   <meta name="description" content="zwh 的个人博客，记录技术、阅读和日常思考。">
   <title>zwh 的博客</title>
   <script src="theme.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20260825-3">
+  <link rel="stylesheet" href="styles.css?v=20260825-4">
 </head>
 <body class="home-page">
   <div class="site-shell">
@@ -57,8 +57,32 @@
 
       <section id="archive" class="archive-section">
         <div class="section-label"><span class="rule"></span><span>按年份浏览</span></div>
-        <div class="archive-row"><span>2026</span><span class="archive-line"></span><span>3 篇文章</span></div>
-        <div class="archive-row muted"><span>更早</span><span class="archive-line"></span><span>慢慢整理中</span></div>
+        <div class="archive-layout">
+          <div class="archive-list">
+            <div class="archive-row"><span id="archiveYear">2026</span><span class="archive-line"></span><span id="archiveCount">0 篇文章</span></div>
+            <div class="archive-row muted"><span>更早</span><span class="archive-line"></span><span>慢慢整理中</span></div>
+          </div>
+          <aside class="calendar-card" aria-label="按发布日期筛选文章">
+            <div class="calendar-head">
+              <div>
+                <p class="calendar-kicker">POST CALENDAR</p>
+                <h2 id="calendarMonth">2026 年 8 月</h2>
+              </div>
+              <div class="calendar-actions">
+                <button id="previousMonth" type="button" aria-label="上个月">←</button>
+                <button id="nextMonth" type="button" aria-label="下个月">→</button>
+              </div>
+            </div>
+            <div class="calendar-weekdays" aria-hidden="true">
+              <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+            </div>
+            <div id="calendarDays" class="calendar-days"></div>
+            <div class="calendar-foot">
+              <span id="calendarStatus">彩色日期表示当天发布过文章</span>
+              <button id="clearDateFilter" type="button" hidden>清除筛选</button>
+            </div>
+          </aside>
+        </div>
       </section>
 
       <section id="about" class="about-section">
@@ -72,6 +96,6 @@
 
     <footer class="footer"><span>© 2026 zwh</span><span>用文字整理世界，也整理自己。</span></footer>
   </div>
-  <script src="app.js?v=20260825-3"></script>
+  <script src="app.js?v=20260825-4"></script>
 </body>
 </html>

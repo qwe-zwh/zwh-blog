@@ -8,9 +8,56 @@ const pagination = document.querySelector("#pagination");
 const previousPage = document.querySelector("#previousPage");
 const nextPage = document.querySelector("#nextPage");
 const pageNumbers = document.querySelector("#pageNumbers");
+const sectionTitle = document.querySelector("#sectionTitle");
+const archiveYear = document.querySelector("#archiveYear");
+const archiveCount = document.querySelector("#archiveCount");
+const calendarMonth = document.querySelector("#calendarMonth");
+const calendarDays = document.querySelector("#calendarDays");
+const calendarStatus = document.querySelector("#calendarStatus");
+const clearDateFilter = document.querySelector("#clearDateFilter");
+const previousMonth = document.querySelector("#previousMonth");
+const nextMonth = document.querySelector("#nextMonth");
 const postsPerPage = 8;
 let currentPage = pageFromUrl();
 let postsLoaded = false;
+let selectedDate = dateFromUrl();
+const initialCalendarDate = selectedDate || dateKey(new Date());
+let calendarYearValue = Number(initialCalendarDate.slice(0, 4));
+let calendarMonthValue = Number(initialCalendarDate.slice(5, 7)) - 1;
+
+function dateKey(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date).reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function validDateKey(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
+function dateFromUrl() {
+  const value = new URL(location.href).searchParams.get("date") || "";
+  return validDateKey(value) ? value : "";
+}
+
+function readableDate(value) {
+  const [year, month, day] = value.split("-").map(Number);
+  return `${year} 年 ${month} 月 ${day} 日`;
+}
+
+function setCalendarFromDate(value) {
+  calendarYearValue = Number(value.slice(0, 4));
+  calendarMonthValue = Number(value.slice(5, 7)) - 1;
+}
 
 function pageFromUrl() {
   const value = Number.parseInt(new URL(location.href).searchParams.get("page") || "1", 10);
@@ -22,6 +69,85 @@ function setPageInUrl(page, replace = false) {
   if (page > 1) url.searchParams.set("page", String(page));
   else url.searchParams.delete("page");
   history[replace ? "replaceState" : "pushState"]({}, "", url);
+}
+
+function setDateInUrl(value, replace = false) {
+  const url = new URL(location.href);
+  if (value) url.searchParams.set("date", value);
+  else url.searchParams.delete("date");
+  url.searchParams.delete("page");
+  history[replace ? "replaceState" : "pushState"]({}, "", url);
+}
+
+function renderArchiveSummary() {
+  if (!posts.length) return;
+  const years = posts.map(post => dateKey(post.createdAt)).filter(Boolean).map(key => Number(key.slice(0, 4)));
+  if (!years.length) return;
+  const newestYear = Math.max(...years);
+  archiveYear.textContent = String(newestYear);
+  archiveCount.textContent = `${years.filter(year => year === newestYear).length} 篇文章`;
+}
+
+function renderCalendar() {
+  calendarMonth.textContent = `${calendarYearValue} 年 ${calendarMonthValue + 1} 月`;
+  const counts = new Map();
+  posts.forEach(post => {
+    const key = dateKey(post.createdAt);
+    if (key) counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  const firstWeekday = new Date(Date.UTC(calendarYearValue, calendarMonthValue, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(calendarYearValue, calendarMonthValue + 1, 0)).getUTCDate();
+  const cells = [];
+  for (let index = 0; index < firstWeekday; index += 1) {
+    const placeholder = document.createElement("span");
+    placeholder.className = "calendar-day placeholder";
+    placeholder.setAttribute("aria-hidden", "true");
+    cells.push(placeholder);
+  }
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const key = `${calendarYearValue}-${String(calendarMonthValue + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const count = counts.get(key) || 0;
+    const button = document.createElement("button");
+    button.className = "calendar-day";
+    button.type = "button";
+    button.textContent = String(day);
+    button.disabled = count === 0;
+    button.setAttribute("aria-label", count ? `${readableDate(key)}，${count} 篇文章` : `${readableDate(key)}，没有文章`);
+    if (count) {
+      button.classList.add("has-post");
+      const marker = document.createElement("span");
+      marker.className = "calendar-marker";
+      marker.textContent = count > 1 ? String(count) : "";
+      button.append(marker);
+      button.addEventListener("click", () => {
+        selectedDate = key;
+        currentPage = 1;
+        input.value = "";
+        setDateInUrl(key);
+        renderPosts();
+        renderCalendar();
+        document.querySelector(".toolbar").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+    if (key === selectedDate) {
+      button.classList.add("selected");
+      button.setAttribute("aria-pressed", "true");
+    }
+    cells.push(button);
+  }
+  while (cells.length % 7) {
+    const placeholder = document.createElement("span");
+    placeholder.className = "calendar-day placeholder";
+    placeholder.setAttribute("aria-hidden", "true");
+    cells.push(placeholder);
+  }
+  calendarDays.replaceChildren(...cells);
+
+  const monthPrefix = `${calendarYearValue}-${String(calendarMonthValue + 1).padStart(2, "0")}-`;
+  const monthCount = [...counts].filter(([key]) => key.startsWith(monthPrefix)).reduce((sum, [, count]) => sum + count, 0);
+  calendarStatus.textContent = selectedDate ? `正在查看 ${readableDate(selectedDate)}` : `本月发布 ${monthCount} 篇文章`;
+  clearDateFilter.hidden = !selectedDate;
 }
 
 function visiblePageItems(totalPages) {
@@ -148,7 +274,12 @@ function createPostCard(post, index) {
 
 function renderPosts(keyword = "") {
   const query = keyword.trim().toLowerCase();
-  const filtered = posts.filter(post => [post.title, post.excerpt, ...(Array.isArray(post.tags) ? post.tags : [])].join(" ").toLowerCase().includes(query));
+  const filtered = posts.filter(post => {
+    const matchesKeyword = [post.title, post.excerpt, ...(Array.isArray(post.tags) ? post.tags : [])].join(" ").toLowerCase().includes(query);
+    return matchesKeyword && (!selectedDate || dateKey(post.createdAt) === selectedDate);
+  });
+  sectionTitle.textContent = selectedDate ? `${readableDate(selectedDate)} · 发布` : query ? "搜索结果" : "最新文章";
+  empty.textContent = selectedDate ? "这一天没有符合条件的文章。" : "没有找到相关内容，换个关键词试试。";
   const totalPages = Math.max(1, Math.ceil(filtered.length / postsPerPage));
   const requestedPage = currentPage;
   currentPage = Math.min(Math.max(currentPage, 1), totalPages);
@@ -172,12 +303,16 @@ fetch("/api/posts")
     postsLoaded = true;
     if (onlinePosts.length) {
       const latest = onlinePosts.reduce((newest, post) => new Date(post.createdAt) > new Date(newest.createdAt) ? post : newest);
+      if (!selectedDate) setCalendarFromDate(dateKey(latest.createdAt));
       document.querySelector("#lastUpdated").textContent = new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(latest.createdAt)).replaceAll("/", " / ");
     }
+    renderArchiveSummary();
+    renderCalendar();
     renderPosts(input.value);
   })
   .catch(() => {
     postsLoaded = true;
+    renderCalendar();
     renderPosts(input.value);
   });
 
@@ -190,9 +325,31 @@ previousPage.addEventListener("click", () => goToPage(currentPage - 1));
 nextPage.addEventListener("click", () => goToPage(currentPage + 1));
 window.addEventListener("popstate", () => {
   currentPage = pageFromUrl();
+  selectedDate = dateFromUrl();
+  if (selectedDate) setCalendarFromDate(selectedDate);
   renderPosts(input.value);
+  renderCalendar();
 });
 window.matchMedia("(max-width: 640px)").addEventListener("change", () => renderPosts(input.value));
+previousMonth.addEventListener("click", () => {
+  const month = new Date(Date.UTC(calendarYearValue, calendarMonthValue - 1, 1));
+  calendarYearValue = month.getUTCFullYear();
+  calendarMonthValue = month.getUTCMonth();
+  renderCalendar();
+});
+nextMonth.addEventListener("click", () => {
+  const month = new Date(Date.UTC(calendarYearValue, calendarMonthValue + 1, 1));
+  calendarYearValue = month.getUTCFullYear();
+  calendarMonthValue = month.getUTCMonth();
+  renderCalendar();
+});
+clearDateFilter.addEventListener("click", () => {
+  selectedDate = "";
+  currentPage = 1;
+  setDateInUrl("");
+  renderPosts(input.value);
+  renderCalendar();
+});
 document.addEventListener("keydown", event => {
   if (event.key === "/" && document.activeElement !== input) {
     event.preventDefault();
