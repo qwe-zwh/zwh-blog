@@ -23,6 +23,7 @@ const visitorKey = "zwh-visitor-id";
 const authorKey = "zwh-comment-author";
 let interactionsLoaded = false;
 let liked = false;
+let viewRecorded = false;
 
 function formatDate(iso) { return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso)).replaceAll("/", "."); }
 function text(node, value) { node.textContent = value; }
@@ -314,6 +315,10 @@ function renderPost(post) {
     return node;
   }));
   article.hidden = false;
+  if (!viewRecorded) {
+    viewRecorded = true;
+    fetch(`/api/posts/${encodeURIComponent(id)}/views`, { method: "POST", cache: "no-store", keepalive: true }).catch(() => {});
+  }
   if (post.locked) lockedPost.hidden = false;
   else renderContent(post);
 }

@@ -407,9 +407,14 @@ async function loadManagedPosts() {
   manageMessage.className = "form-message";
   manageMessage.textContent = "正在加载...";
   try {
-    const response = await fetch("/api/posts");
+    const [response, viewsResponse] = await Promise.all([
+      fetch("/api/posts"),
+      fetch("/api/views", { headers: { authorization: `Bearer ${token()}` }, cache: "no-store" }),
+    ]);
     if (!response.ok) throw new Error("文章列表加载失败。");
     const posts = await response.json();
+    const viewsData = viewsResponse.ok ? await viewsResponse.json().catch(() => ({})) : {};
+    const viewsByPost = new Map((viewsData.views || []).map(item => [item.postId, Number(item.count || 0)]));
     managedPosts.replaceChildren();
     if (!posts.length) {
       const empty = document.createElement("p");
@@ -428,6 +433,10 @@ async function loadManagedPosts() {
       const meta = document.createElement("p");
       meta.className = "managed-post-meta";
       meta.append(`${formatDate(post.createdAt)} · ${(post.tags || []).join(" / ") || "无标签"} · `);
+      const viewState = document.createElement("span");
+      viewState.className = "view-state";
+      viewState.textContent = `${viewsByPost.get(post.id) || 0} 次浏览`;
+      meta.append(viewState, " · ");
       const lockState = document.createElement("span");
       lockState.className = "lock-state";
       lockState.textContent = post.locked ? "已加密" : "公开";

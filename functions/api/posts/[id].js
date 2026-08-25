@@ -126,9 +126,18 @@ export async function onRequestDelete({ request, env, params }) {
   await env.POSTS.delete(`post:${params.id}`);
   await env.POSTS.put("index", JSON.stringify(ids.filter(id => id !== params.id)));
   if (env.DB) {
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS post_views (
+        post_id TEXT NOT NULL,
+        ip_hash TEXT NOT NULL,
+        first_viewed_at TEXT NOT NULL,
+        PRIMARY KEY (post_id, ip_hash)
+      )
+    `).run();
     await env.DB.batch([
       env.DB.prepare("DELETE FROM comments WHERE post_id = ?1").bind(params.id),
       env.DB.prepare("DELETE FROM likes WHERE post_id = ?1").bind(params.id),
+      env.DB.prepare("DELETE FROM post_views WHERE post_id = ?1").bind(params.id),
     ]);
   }
   return new Response(null, { status: 204 });

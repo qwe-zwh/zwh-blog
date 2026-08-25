@@ -11,6 +11,7 @@
 - 后台可重新编辑已发布文章的标题、摘要、标签和正文
 - 后台可上传文章封面，并把图片插入正文
 - 正文编辑器支持直接粘贴剪贴板截图并自动上传
+- 后台显示每篇文章按 IP 去重后的独立浏览量
 - 文章点赞与取消点赞，同一浏览器重复点赞会自动去重
 - 文章评论、发布频率限制与后台评论管理
 - 归档与关于页面区块
@@ -51,6 +52,7 @@ npx wrangler d1 create zwh-blog-interactions
 
 ```powershell
 npx wrangler d1 execute zwh-blog-interactions --remote --file=./migrations/0001_interactions.sql
+npx wrangler d1 execute zwh-blog-interactions --remote --file=./migrations/0002_post_views.sql
 ```
 
 在 Pages 项目 Settings -> Bindings 中添加 D1 database binding：
