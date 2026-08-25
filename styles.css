@@ -231,6 +231,27 @@ html[data-theme="dark"] .post:hover .post-title { color: var(--coral); }
 .read-more b { display: grid; width: 27px; height: 27px; place-items: center; border-radius: 9px; color: var(--moss); box-shadow: var(--small-shadow); font-weight: 400; }
 .post:hover .read-more b { color: #fff; background: var(--moss); }
 .empty-state { padding: 50px 0; color: var(--muted); text-align: center; font-size: 14px; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 42px; }
+.page-numbers { display: flex; align-items: center; gap: 8px; }
+.page-step, .page-number {
+  min-height: 42px;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: 13px;
+  color: var(--muted);
+  background: var(--surface);
+  box-shadow: var(--small-shadow);
+  cursor: pointer;
+  font: 11px var(--mono);
+  transition: color .2s ease, border-color .2s ease, background-color .2s ease, transform .2s ease;
+}
+.page-step { padding: 0 17px; }
+.page-number { width: 42px; padding: 0; }
+.page-step:hover:not(:disabled), .page-number:hover { border-color: var(--moss); color: var(--moss); transform: translateY(-2px); }
+.page-number.active { border-color: var(--moss); color: #fff; background: var(--moss); box-shadow: 0 8px 20px color-mix(in srgb, var(--moss) 28%, transparent); }
+html[data-theme="dark"] .page-number.active { color: var(--paper); background: var(--coral); border-color: var(--coral); }
+.page-step:disabled { cursor: not-allowed; opacity: .38; box-shadow: none; }
+.page-step:focus-visible, .page-number:focus-visible { outline: 2px solid var(--coral); outline-offset: 3px; }
+.page-ellipsis { display: grid; width: 24px; height: 42px; place-items: center; color: var(--muted); font: 12px var(--mono); }
 
 .archive-section, .about-section { padding-top: 92px; }
 .archive-row { display: flex; align-items: center; gap: 16px; max-width: 760px; margin-top: 16px; padding: 18px 22px; border: 1px solid rgba(255, 255, 255, .58); border-radius: 16px; color: var(--ink); background: var(--surface); box-shadow: var(--small-shadow); font: 12px var(--mono); }
@@ -270,6 +291,12 @@ html[data-theme="dark"] .about-grid { border-color: var(--line); }
   .post-cover { border-radius: 14px; }
   .post-title { font-size: 24px; }
   .post-card-foot { align-items: flex-end; }
+  .pagination { gap: 7px; margin-top: 32px; }
+  .page-numbers { gap: 5px; }
+  .page-step { min-width: 42px; padding: 0 11px; font-size: 13px; }
+  .page-step-label { display: none; }
+  .page-number { width: 38px; min-height: 38px; }
+  .page-ellipsis { width: 14px; }
   .about-grid { display: block; padding: 28px; }
   .about-meta { margin-top: 24px !important; }
   .footer { display: block; }

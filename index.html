@@ -6,7 +6,7 @@
   <meta name="description" content="zwh 的个人博客，记录技术、阅读和日常思考。">
   <title>zwh 的博客</title>
   <script src="theme.js"></script>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260825-3">
 </head>
 <body class="home-page">
   <div class="site-shell">
@@ -49,6 +49,11 @@
 
       <section id="postList" class="post-list" aria-live="polite"></section>
       <p id="emptyState" class="empty-state" hidden>没有找到相关内容，换个关键词试试。</p>
+      <nav id="pagination" class="pagination" aria-label="文章分页" hidden>
+        <button id="previousPage" class="page-step" type="button" aria-label="上一页"><span aria-hidden="true">←</span><span class="page-step-label"> 上一页</span></button>
+        <div id="pageNumbers" class="page-numbers"></div>
+        <button id="nextPage" class="page-step" type="button" aria-label="下一页"><span class="page-step-label">下一页 </span><span aria-hidden="true">→</span></button>
+      </nav>
 
       <section id="archive" class="archive-section">
         <div class="section-label"><span class="rule"></span><span>按年份浏览</span></div>
@@ -67,6 +72,6 @@
 
     <footer class="footer"><span>© 2026 zwh</span><span>用文字整理世界，也整理自己。</span></footer>
   </div>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260825-3"></script>
 </body>
 </html>
